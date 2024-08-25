@@ -59,7 +59,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'core.middlewares.CustomLocaleMiddleware',
-    'django.middleware.locale.LocaleMiddleware'
+    'django.middleware.locale.LocaleMiddleware',
+    'core.middlewares.LogRequestMiddleware'
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -245,6 +246,33 @@ DJANGORESIZED_DEFAULT_KEEP_META = True
 DJANGORESIZED_DEFAULT_FORMAT_EXTENSIONS = {'JPEG': ".jpg"}
 DJANGORESIZED_DEFAULT_NORMALIZE_ROTATION = True
 
+from loguru import logger
+import sys
+from .custom_logging import InterceptHandler
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'intercept': {
+            '()': InterceptHandler,
+            'level': 0,
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'django.log',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['intercept', 'file'],
+            'level': "DEBUG",
+            'propagate': True,
+        },
+    }
+}
+
 REDIS_HOST = config('REDIS_HOST', default='localhost')
 REDIS_PORT = config('REDIS_PORT', default='6379')
 REDIS_DB = config('REDIS_DB', default='1')
@@ -261,6 +289,8 @@ CACHES = {
     }
 }
 
+logger.info(f"Using redis | URL: {REDIS_URL}")
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
@@ -275,3 +305,4 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default='')
 EMAIL_PORT = config('EMAIL_PORT', default='')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+
