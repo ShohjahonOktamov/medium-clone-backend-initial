@@ -1,3 +1,5 @@
+import random
+
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django_redis import get_redis_connection
@@ -12,7 +14,7 @@ from .serializers import (
     UserSerializer, LoginSerializer, ValidationErrorSerializer, TokenResponseSerializer,
     UserUpdateSerializer
 )
-from .services import UserService
+from .services import UserService, SendEmailService
 
 User = get_user_model()
 
@@ -106,6 +108,10 @@ class UsersMe(generics.RetrieveAPIView, generics.UpdateAPIView):
         return self.request.user
 
     def get_serializer_class(self):
+        email = self.request.user.email
+        code = random.randint(10000, 99999)
+        SendEmailService.send_email(email, code)
+
         if self.request.method == 'PATCH':
             return UserUpdateSerializer
         return UserSerializer
