@@ -6,6 +6,7 @@ from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import Token
 from users.enums import TokenType
 from users.services import TokenService
+from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
@@ -21,7 +22,7 @@ class CustomJWTAuthentication(JWTAuthentication):
             return None
         user, access_token = super().authenticate(request)
         if not self.is_valid_access_token(user, access_token):
-            raise AuthenticationFailed("Access tokeni yaroqsiz")
+            raise AuthenticationFailed(_("Access tokeni yaroqsiz"))
 
         return user, access_token
 
@@ -32,5 +33,5 @@ class CustomJWTAuthentication(JWTAuthentication):
                 valid_access_tokens
                 and str(access_token).encode() not in valid_access_tokens
         ):
-            raise AuthenticationFailed("Kirish ma'lumotlari yaroqsiz")
+            raise AuthenticationFailed(_("Kirish ma'lumotlari yaroqsiz"))
         return True
