@@ -23,7 +23,7 @@ class ClapSerializer(serializers.ModelSerializer):
 class ArticleCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Article] = Article
-        fields: list[str] = ["author", "title", "summary", "content", "thumbnail", "topic_ids"]
+        fields: list[str] = [   "title", "summary", "content", "thumbnail", "topic_ids"]
 
 
 class ArticleDetailSerializer(serializers.ModelSerializer):

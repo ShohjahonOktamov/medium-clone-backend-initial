@@ -33,3 +33,6 @@ class ArticlesView(viewsets.ModelViewSet):
         if self.action == 'create':
             return ArticleCreateSerializer
         return ArticleDetailSerializer
+
+    def perform_create(self, serializer) -> None:
+        serializer.save(author=self.request.user)
