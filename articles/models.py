@@ -33,7 +33,7 @@ class Article(Model):
         verbose_name_plural: str = "Articles"
         ordering: list[str] = ["-created_at"]
 
-    author: ForeignKey = ForeignKey(to=CustomUser, on_delete=CASCADE)
+    author: ForeignKey = ForeignKey(to=CustomUser, on_delete=CASCADE, null=True, blank=True)
     title: CharField = CharField(max_length=100)
     summary: CharField = CharField(max_length=200)
     content: TextField = TextField()

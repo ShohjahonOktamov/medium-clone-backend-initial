@@ -2,7 +2,6 @@ from typing import Type
 
 from rest_framework import serializers
 
-from users.models import CustomUser
 from users.serializers import UserSerializer
 from .models import Article, Topic, Clap
 
@@ -31,11 +30,6 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         many=True,
         required=False
     )
-
-    def create(self, validated_data):
-        validated_data['author'] = CustomUser.objects.get(id=1)
-        validated_data['topic_ids'] = [1]
-        return super().create(validated_data)
 
 
 class ArticleDetailSerializer(serializers.ModelSerializer):
