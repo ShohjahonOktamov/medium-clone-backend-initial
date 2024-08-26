@@ -336,7 +336,7 @@ class RecommendationView(APIView):
             recommendation: Recommendation | None = Recommendation.objects.filter(topic=topic).first()
             if recommendation:
                 if recommendation.recommendation_type != recommendation_type:
-                    recommendation.recommendation_type = recommendation
+                    recommendation.recommendation_type = recommendation_type
                     recommendation.save()
             else:
                 Recommendation.objects.create(recommendation_type=recommendation_type, topic=topic)
