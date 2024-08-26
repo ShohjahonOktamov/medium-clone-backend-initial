@@ -1,3 +1,5 @@
+from typing import Type
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
@@ -7,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from users.errors import BIRTH_YEAR_ERROR_MSG
+from .models import Recommendation
 
 User = get_user_model()
 
@@ -136,3 +139,9 @@ class ResetPasswordResponseSerializer(serializers.Serializer):
         except ValidationError as e:
             raise serializers.ValidationError(e.messages)
         return value
+
+
+class RecommendationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model: Type[Recommendation] = Recommendation
+        fields: tuple[str, str, str] = ('topic', 'recommendation_type')

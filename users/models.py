@@ -71,3 +71,20 @@ class CustomUser(AbstractUser):
     def full_name(self):
         """ Returns the user's full name. """
         return f"{self.last_name} {self.first_name} {self.middle_name}"
+
+
+class Recommendation(models.Model):
+    class Meta:
+        db_table: str = "recommendation"
+        verbose_name: str = "Recommendation"
+        verbose_name_plural: str = "Recommendations"
+        ordering: list[str] = ["-created_at"]
+
+    RECOMMENDATION_TYPE_CHOICES: list[tuple[str, str], tuple[str, str]] = [
+        ("more", "More Recommended"),
+        ("less", "Less Recommended")
+    ]
+
+    topic: models.OneToOneField = models.OneToOneField(to='articles.Topic', on_delete=models.CASCADE)
+    recommendation_type: models.CharField = models.CharField(max_length=4, choices=RECOMMENDATION_TYPE_CHOICES)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)

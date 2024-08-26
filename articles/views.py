@@ -14,14 +14,22 @@ from .serializers import (
 
 
 @extend_schema_view(
-    get=extend_schema(
+    list=extend_schema(
+        summary="List Articles",
+        request=None,
+        responses={
+            200: ArticleListSerializer(many=True)
+        }
+    )
+    ,
+    retrieve=extend_schema(
         summary="Get Article Details",
         request=None,
         responses={
             200: ArticleDetailSerializer
         }
     ),
-    post=extend_schema(
+    create=extend_schema(
         summary="Create Article",
         request=ArticleCreateSerializer,
         responses={

@@ -2,6 +2,8 @@ from secrets import token_urlsafe
 
 from django.contrib.auth import authenticate, get_user_model, update_session_auth_hash
 from django.contrib.auth.hashers import make_password
+from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 from django_redis import get_redis_connection
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, permissions, generics, parsers, exceptions
@@ -11,7 +13,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from articles.models import Article
 from .errors import ACTIVE_USER_NOT_FOUND_ERROR_MSG
+from .models import Recommendation
 from .serializers import (
     UserSerializer,
     LoginSerializer,
@@ -23,7 +27,8 @@ from .serializers import (
     ForgotPasswordVerifyRequestSerializer,
     ResetPasswordResponseSerializer,
     ForgotPasswordVerifyResponseSerializer,
-    ForgotPasswordResponseSerializer
+    ForgotPasswordResponseSerializer,
+    RecommendationSerializer
 )
 from .services import UserService, SendEmailService, OTPService
 
@@ -294,3 +299,46 @@ class ResetPasswordView(generics.UpdateAPIView):
         tokens = UserService.create_tokens(user, is_force_add_to_redis=True)
         redis_conn.delete(token_hash)
         return Response(tokens)
+
+
+@extend_schema_view(
+    post=extend_schema(
+        summary="Adjust Recommendations for an Article",
+        request=RecommendationSerializer,
+        responses={
+            204: None,
+            400: 'Invalid data'
+        }
+    )
+)
+class RecommendationView(APIView):
+    def post(self, request: HttpRequest, *args, **kwargs) -> Response:
+        data: dict[str, int] = request.data
+
+        more_article_id: int | None = data.get('more_article_id')
+        less_article_id: None | int = data.get('less_article_id')
+
+        if more_article_id and less_article_id:
+            return Response(data={'error': 'Cannot provide both more_article_id and less_article_id.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if not more_article_id and not less_article_id:
+            return Response(data={'error': 'One of more_article_id or less_article_id must be provided.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if more_article_id:
+            article: Article | None = get_object_or_404(Article, id=more_article_id)
+            recommendation_type: str = 'more'
+        elif less_article_id:
+            article: None | Article = get_object_or_404(Article, id=less_article_id)
+            recommendation_type: str = 'less'
+
+        for topic in article.topics.all():
+            recommendation: Recommendation | None = Recommendation.objects.filter(topic=topic).first()
+            if recommendation:
+                if recommendation.recommendation_type != recommendation_type:
+                    recommendation.recommendation_type = recommendation
+                    recommendation.save()
+            else:
+                Recommendation.objects.create(recommendation_type=recommendation_type, topic=topic)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
