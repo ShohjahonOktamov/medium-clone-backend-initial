@@ -35,7 +35,8 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 class ArticleDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Article] = Article
-        fields: list[str] = ["id", "author", "title", "summary", "content", "status", "thumbnail", "topics",
+        fields: list[str] = ["id", "author", "title", "summary", "content", "status", "thumbnail", "views_count",
+                             "reads_count", "topics",
                              "created_at", "updated_at", "claps"]
 
     author: UserSerializer = UserSerializer()
@@ -47,4 +48,3 @@ class ArticleListSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Article] = Article
         fields: str = "__all__"
-
