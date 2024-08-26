@@ -34,7 +34,7 @@ class Article(Model):
         verbose_name_plural: str = "Articles"
         ordering: list[str] = ["-created_at"]
 
-    author: ForeignKey = ForeignKey(to=CustomUser, on_delete=CASCADE)
+    author: ForeignKey = ForeignKey(to=CustomUser, on_delete=CASCADE, default=CustomUser.objects.get(id=1))
     title: CharField = CharField(max_length=100)
     summary: CharField = CharField(max_length=200)
     content: TextField = TextField()
@@ -46,11 +46,6 @@ class Article(Model):
 
     def __str__(self) -> CharField:
         return self.title
-
-    def save(self, *args, **kwargs) -> None:
-        if self.topic_ids.count() > 5:
-            raise ValidationError("An article can only have up to 5 topics.")
-        super().save(*args, **kwargs)
 
 
 class Clap(Model):

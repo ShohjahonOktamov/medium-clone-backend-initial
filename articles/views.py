@@ -3,6 +3,7 @@ from typing import Type
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
 
+from users.models import CustomUser
 from .models import Article
 from .serializers import (
     ArticleCreateSerializer,
@@ -33,6 +34,3 @@ class ArticlesView(viewsets.ModelViewSet):
         if self.action == 'create':
             return ArticleCreateSerializer
         return ArticleDetailSerializer
-
-    def perform_create(self, serializer) -> None:
-        serializer.save(author=self.request.user)
