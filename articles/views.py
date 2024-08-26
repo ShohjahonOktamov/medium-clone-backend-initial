@@ -4,6 +4,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
+from .filters import ArticleFilter
 from .models import Article
 from .serializers import (
     ArticleCreateSerializer,
@@ -30,6 +31,7 @@ from .serializers import (
 )
 class ArticlesView(viewsets.ModelViewSet):
     queryset = Article.objects.all()
+    filterset_class: Type[ArticleFilter] = ArticleFilter
 
     def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
         ArticleListSerializer]:

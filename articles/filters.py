@@ -8,4 +8,4 @@ from .models import Article
 class ArticleFilter(django_filters.FilterSet):
     class Meta:
         model: Type[Article] = Article
-        fields: str = "__all__"
+        exclude: list[str] = ["thumbnail"]
