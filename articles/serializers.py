@@ -34,6 +34,7 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['author'] = CustomUser.objects.get(id=1)
+        validated_data['topic_ids'] = [1]
         return super().create(validated_data)
 
 
