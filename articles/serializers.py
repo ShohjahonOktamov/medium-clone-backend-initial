@@ -21,23 +21,23 @@ class ClapSerializer(serializers.ModelSerializer):
 
 
 class ArticleCreateSerializer(serializers.ModelSerializer):
+    topic_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        source="topics",
+        queryset=Topic.objects.filter(is_active=True)
+    )
+
     class Meta:
         model: Type[Article] = Article
-        fields: list[str] = ["title", "summary", "content", "topic_ids"]
-
-    topic_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Topic.objects.filter(is_active=True),
-        many=True,
-        required=False
-    )
+        fields: tuple[str] = ("title", "summary", "content", "topic_ids")
 
 
 class ArticleDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Article] = Article
-        fields: list[str] = ["id", "author", "title", "summary", "content", "status", "thumbnail", "topic_ids",
+        fields: list[str] = ["id", "author", "title", "summary", "content", "status", "thumbnail", "topics",
                              "created_at", "updated_at", "claps"]
 
     author: UserSerializer = UserSerializer()
-    topic_ids: TopicSerializer = TopicSerializer(many=True)
+    topics: TopicSerializer = TopicSerializer(many=True)
     claps: ClapSerializer = ClapSerializer(many=True)

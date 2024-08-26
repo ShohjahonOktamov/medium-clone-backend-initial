@@ -1,9 +1,9 @@
 from typing import Type
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 
-from users.models import CustomUser
 from .models import Article
 from .serializers import (
     ArticleCreateSerializer,
@@ -35,3 +35,12 @@ class ArticlesView(viewsets.ModelViewSet):
             return ArticleCreateSerializer
         return ArticleDetailSerializer
 
+    def create(self, request, *args, **kwargs) -> Response:
+        create_serializer = self.get_serializer(data=request.data)
+
+        if create_serializer.is_valid():
+            article = create_serializer.save()
+            detail_serializer = ArticleDetailSerializer(article)
+            return Response(data=detail_serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(data=create_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

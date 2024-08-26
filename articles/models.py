@@ -39,7 +39,7 @@ class Article(Model):
     content: TextField = TextField()
     status: CharField = CharField(choices=STATUS_CHOICES, default="pending")
     thumbnail: ImageField = ImageField(upload_to="thumbnails/", blank=True, null=True)
-    topic_ids: ManyToManyField = ManyToManyField(to=Topic, blank=True)
+    topics: ManyToManyField = ManyToManyField(to=Topic, blank=True)
     created_at: DateTimeField = DateTimeField(default=timezone.now)
     updated_at: DateTimeField = DateTimeField(default=timezone.now)
 
