@@ -55,7 +55,10 @@ class Article(Model):
 
 class Clap(Model):
     class Meta:
-        unique_together = ("article", "user")
+        db_table: str = "clap"
+        verbose_name: str = 'Clap'
+        verbose_name_plural: str = 'Claps'
+        unique_together: tuple[str, str] = ("article", "user")
 
     article: ForeignKey = ForeignKey(to=Article, on_delete=CASCADE, related_name="claps")
     user: ForeignKey = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE)
