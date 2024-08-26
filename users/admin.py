@@ -11,7 +11,7 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('middle_name', 'avatar',)
         }),
     )
-
+    readonly_fields = 'id',
     list_display = ('id', 'username', 'email', 'first_name', 'last_name', 'middle_name')
     list_display_links = ('id', 'username', 'email')
     search_fields = ('username', 'email', 'first_name', 'last_name', 'middle_name')

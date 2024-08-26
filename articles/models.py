@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db.models import Model, CharField, TextField, BooleanField, ForeignKey, ImageField, ManyToManyField, \
     DateTimeField, CASCADE
 from django.utils import timezone
@@ -34,7 +33,7 @@ class Article(Model):
         verbose_name_plural: str = "Articles"
         ordering: list[str] = ["-created_at"]
 
-    author: ForeignKey = ForeignKey(to=CustomUser, on_delete=CASCADE, default=CustomUser.objects.get(id=1))
+    author: ForeignKey = ForeignKey(to=CustomUser, on_delete=CASCADE)
     title: CharField = CharField(max_length=100)
     summary: CharField = CharField(max_length=200)
     content: TextField = TextField()

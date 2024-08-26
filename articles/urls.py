@@ -7,6 +7,4 @@ router: DefaultRouter = DefaultRouter()
 
 router.register(prefix='', viewset=ArticlesView)
 
-urlpatterns: list = [
-    path('', include(router.urls))
-]
+urlpatterns = router.urls
