@@ -56,3 +56,20 @@ class Clap(Model):
 
     article: ForeignKey = ForeignKey(to=Article, on_delete=CASCADE, related_name="claps")
     user: ForeignKey = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE)
+    created_at: DateTimeField = DateTimeField(default=timezone.now)
+    updated_at: DateTimeField = DateTimeField(default=timezone.now)
+
+
+class Comment(Model):
+    class Meta:
+        db_table: str = "comment"
+        verbose_name: str = 'Comment'
+        verbose_name_plural: str = 'Comments'
+        ordering: list[str] = ["-created_at"]
+        unique_together: tuple[str, str] = ("article", "user")
+
+    article: ForeignKey = ForeignKey(to=Article, on_delete=CASCADE, related_name="comments")
+    user: ForeignKey = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE)
+    text: TextField = TextField()
+    created_at: DateTimeField = DateTimeField(default=timezone.now)
+    updated_at: DateTimeField = DateTimeField(default=timezone.now)

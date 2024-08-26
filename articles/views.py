@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from .models import Article
 from .serializers import (
     ArticleCreateSerializer,
-    ArticleDetailSerializer
+    ArticleDetailSerializer,
+    ArticleListSerializer
 )
 
 
@@ -30,9 +31,14 @@ from .serializers import (
 class ArticlesView(viewsets.ModelViewSet):
     queryset = Article.objects.all()
 
-    def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer]:
+    def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
+        ArticleListSerializer]:
         if self.action == 'create':
             return ArticleCreateSerializer
+
+        if self.action == 'list':
+            return ArticleListSerializer
+
         return ArticleDetailSerializer
 
     def create(self, request, *args, **kwargs) -> Response:

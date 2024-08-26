@@ -41,3 +41,10 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
     author: UserSerializer = UserSerializer()
     topics: TopicSerializer = TopicSerializer(many=True)
     claps: ClapSerializer = ClapSerializer(many=True)
+
+
+class ArticleListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model: Type[Article] = Article
+        fields: str = "__all__"
+

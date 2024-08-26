@@ -49,7 +49,8 @@ EXTERNAL_APPS = [
     'rest_framework_simplejwt',
     'drf_spectacular',
     'django_redis',
-    'modeltranslation'
+    'modeltranslation',
+    'django_filters'
 ]
 
 LOCAL_APPS = [
@@ -185,6 +186,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
