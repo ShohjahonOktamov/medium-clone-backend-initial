@@ -207,6 +207,8 @@ def test_article_create(test_article_create_data, api_client, tokens):
 
     assert response.status_code == status_code
 
+    print(response.content.decode('utf-8'))
+    
     if status_code == 201:
         assert response.status_code == status_code
         assert response.data['title'] == data['title']
