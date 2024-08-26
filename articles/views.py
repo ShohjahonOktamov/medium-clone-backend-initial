@@ -3,6 +3,7 @@ from typing import Type
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
+from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 from .models import Article
@@ -52,7 +53,11 @@ class ArticlesView(viewsets.ModelViewSet):
         response = super().create(request, *args, **kwargs)
         logger.debug(f"Create Response status code: {response.status_code}")
         logger.debug(f"Create Response content: {response.data}")
-        return response
+        return Response(
+            {
+                'status_code': response.data
+            }
+        )
 
     def update(self, request, *args, **kwargs):
         response = super().update(request, *args, **kwargs)
