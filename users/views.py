@@ -342,3 +342,4 @@ class RecommendationView(APIView):
                 Recommendation.objects.create(recommendation_type=recommendation_type, topic=topic)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
