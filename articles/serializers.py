@@ -24,7 +24,7 @@ class ClapSerializer(serializers.ModelSerializer):
 class ArticleCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Article] = Article
-        fields: list[str] = ["title", "summary", "content", "thumbnail", "topic_ids"]
+        fields: list[str] = ["title", "summary", "content", "topic_ids"]
 
     topic_ids = serializers.PrimaryKeyRelatedField(
         queryset=Topic.objects.filter(is_active=True),
