@@ -40,7 +40,7 @@ class Article(Model):
     content: TextField = TextField()
     status: CharField = CharField(choices=STATUS_CHOICES, default="pending")
     thumbnail: ImageField = ImageField(upload_to="thumbnails/")
-    topics: ManyToManyField = ManyToManyField(to=Topic, blank=True)
+    topic_ids: ManyToManyField = ManyToManyField(to=Topic, blank=True)
     created_at: DateTimeField = DateTimeField(default=timezone.now)
     updated_at: DateTimeField = DateTimeField(default=timezone.now)
 
@@ -48,7 +48,7 @@ class Article(Model):
         return self.title
 
     def save(self, *args, **kwargs) -> None:
-        if self.topics.count() > 5:
+        if self.topic_ids.count() > 5:
             raise ValidationError("An article can only have up to 5 topics.")
         super().save(*args, **kwargs)
 
