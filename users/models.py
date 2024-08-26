@@ -27,7 +27,6 @@ class CustomUser(AbstractUser):
         verbose_name_plural = "Users"
         ordering = ["-date_joined"]
 
-        # Composite Index va Hash Index qo'shish
         indexes = [
             HashIndex(fields=['first_name'], name='%(class)s_first_name_hash_idx'),
             HashIndex(fields=['last_name'], name='%(class)s_last_name_hash_idx'),
@@ -45,10 +44,10 @@ class CustomUser(AbstractUser):
 
     middle_name = models.CharField(max_length=30, blank=True, null=True)
 
-    avatar = ResizedImageField(size=[300, 300], crop=['top', 'left'], upload_to=file_upload, blank=True)
+    avatar = ResizedImageField(size=[300, 300], crop=['top', 'left'], upload_to=file_upload, blank=True, null=True)
 
     birth_year = models.IntegerField(
-        validators=[  # tug'ilgan yil oralig'ini tekshirish uchun birinchi variant
+        validators=[
             validators.MinValueValidator(settings.BIRTH_YEAR_MIN),
             validators.MaxValueValidator(settings.BIRTH_YEAR_MAX)
         ],
@@ -56,7 +55,7 @@ class CustomUser(AbstractUser):
         blank=True
     )
 
-    def clean(self):  # tug'ilgan yil oralig'ini tekshirish uchun ikkinchi variant
+    def clean(self):
         super().clean()
         if self.birth_year and not (settings.BIRTH_YEAR_MIN < self.birth_year < settings.BIRTH_YEAR_MAX):
             raise ValidationError(BIRTH_YEAR_ERROR_MSG)

@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from users.errors import BIRTH_YEAR_ERROR_MSG
@@ -10,7 +11,7 @@ from users.errors import BIRTH_YEAR_ERROR_MSG
 User = get_user_model()
 
 
-class UserSerializer(serializers.ModelSerializer):  # user uchun [serializer](<http://serializers.py>) klasi
+class UserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=True, min_length=1)
     last_name = serializers.CharField(required=True, min_length=1)
 
@@ -33,20 +34,20 @@ class UserSerializer(serializers.ModelSerializer):  # user uchun [serializer](<h
         return user
 
 
-class LoginSerializer(serializers.Serializer):  # user login uchun [serializer](<http://serializers.py>) klasi
+class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
-    def validate(self, data):  # kelgan datani yaroqli ekanligini tekshirish uchun
+    def validate(self, data):
         username = data.get('username')
         password = data.get('password')
 
         if username and password:
             user = authenticate(username=username, password=password)
             if user is None:
-                raise serializers.ValidationError('Kirish maʼlumotlari notoʻgʻri')
+                raise serializers.ValidationError(_('Kirish maʼlumotlari notoʻgʻri'))
         else:
-            raise serializers.ValidationError('Foydalanuvchi nomi va parol ham talab qilinadi')
+            raise serializers.ValidationError(_('Foydalanuvchi nomi va parol ham talab qilinadi'))
 
         data['user'] = user
         return data
@@ -98,7 +99,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data['new_password'] == data['old_password']:
-            raise serializers.ValidationError("Yangi va eski parollar bir xil bo'lmasligi kerak")
+            raise serializers.ValidationError(_("Yangi va eski parollar bir xil bo'lmasligi kerak"))
         return data
 
 
@@ -130,7 +131,6 @@ class ResetPasswordResponseSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, min_length=8, write_only=True)
 
     def validate_password(self, value):
-
         try:
             validate_password(value)
         except ValidationError as e:

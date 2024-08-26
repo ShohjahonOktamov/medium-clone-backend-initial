@@ -1,4 +1,12 @@
+import os
+from datetime import timedelta, datetime
 from pathlib import Path
+
+from decouple import config
+from django.utils.translation import gettext_lazy as _
+from loguru import logger
+
+from .custom_logging import InterceptHandler
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,6 +54,7 @@ EXTERNAL_APPS = [
 
 LOCAL_APPS = [
     'users',
+    'articles'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + EXTERNAL_APPS + LOCAL_APPS
@@ -115,8 +124,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-import os
-from django.utils.translation import gettext_lazy as _
 
 LANGUAGE_CODE = 'en'
 
@@ -155,8 +162,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-from decouple import config
-
 SECRET_KEY = config('SECRET_KEY', default='hjg^&%**%%^*GHVGJHGKJGKH')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -170,8 +175,6 @@ DATABASES = {
         'PORT': config('DB_PORT', default=''),
     }
 }
-
-from datetime import timedelta, datetime
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -246,10 +249,6 @@ DJANGORESIZED_DEFAULT_KEEP_META = True
 DJANGORESIZED_DEFAULT_FORMAT_EXTENSIONS = {'JPEG': ".jpg"}
 DJANGORESIZED_DEFAULT_NORMALIZE_ROTATION = True
 
-from loguru import logger
-import sys
-from .custom_logging import InterceptHandler
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -305,4 +304,3 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default='')
 EMAIL_PORT = config('EMAIL_PORT', default='')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-

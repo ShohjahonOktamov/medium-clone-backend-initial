@@ -23,7 +23,8 @@ from .serializers import (
     ForgotPasswordVerifyRequestSerializer,
     ResetPasswordResponseSerializer,
     ForgotPasswordVerifyResponseSerializer,
-    ForgotPasswordResponseSerializer, )
+    ForgotPasswordResponseSerializer
+)
 from .services import UserService, SendEmailService, OTPService
 
 User = get_user_model()

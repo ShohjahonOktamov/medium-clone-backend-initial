@@ -17,6 +17,7 @@ urlpatterns = [
     path('schema/', user_passes_test(is_authenticated)(SpectacularAPIView.as_view()), name='schema'),
     path('swagger/', user_passes_test(is_authenticated)(SpectacularSwaggerView.as_view()), name='swagger-ui'),
     path('redoc/', user_passes_test(is_authenticated)(SpectacularRedocView.as_view()), name='redoc'),
+    path(r'articles/', include('articles.urls'))
 ]
 
 if settings.DEBUG:
