@@ -5,7 +5,7 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from users.authentications import CustomJWTAuthentication
@@ -54,8 +54,18 @@ from .serializers import (
 class ArticlesView(viewsets.ModelViewSet):
     queryset: QuerySet = Article.objects.all()
     filterset_class: Type[ArticleFilter] = ArticleFilter
-    permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
-    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+
+    def get_permissions(self) -> list:
+        if self.request.method == 'DELETE':
+            self.permission_classes = [IsAuthenticated]
+        else:
+            self.permission_classes = [AllowAny]
+        return super().get_permissions()
+
+    def get_authenticators(self) -> list[CustomJWTAuthentication] | list:
+        if self.request.method == 'DELETE':
+            return [CustomJWTAuthentication()]
+        return []
 
     def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
         ArticleListSerializer]:
@@ -77,7 +87,7 @@ class ArticlesView(viewsets.ModelViewSet):
 
         return Response(data=create_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def destroy(self, request: HttpRequest, pk: int, *args, **kwargs):
+    def destroy(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
 
         article: Article | None = get_object_or_404(Article, pk=pk)
 
