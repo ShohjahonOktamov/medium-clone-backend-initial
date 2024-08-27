@@ -5,6 +5,7 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from users.authentications import CustomJWTAuthentication
@@ -53,6 +54,8 @@ from .serializers import (
 class ArticlesView(viewsets.ModelViewSet):
     queryset: QuerySet = Article.objects.all()
     filterset_class: Type[ArticleFilter] = ArticleFilter
+    permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
         ArticleListSerializer]:
@@ -78,13 +81,7 @@ class ArticlesView(viewsets.ModelViewSet):
 
         article: Article | None = get_object_or_404(Article, pk=pk)
 
-        user = CustomJWTAuthentication().authenticate(request=request)
-
-        if user is not None:
-            if user[0] != article.author:
-                return Response(data={'detail': 'You do not have permission to perform this action.'},
-                                status=status.HTTP_403_FORBIDDEN)
-        else:
+        if request.user != article.author:
             return Response(data={'detail': 'You do not have permission to perform this action.'},
                             status=status.HTTP_403_FORBIDDEN)
 
