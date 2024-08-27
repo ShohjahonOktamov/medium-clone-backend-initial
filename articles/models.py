@@ -76,3 +76,16 @@ class Comment(Model):
     text: TextField = TextField()
     created_at: DateTimeField = DateTimeField(auto_now_add=True)
     updated_at: DateTimeField = DateTimeField(auto_now_add=True)
+
+
+class TopicFollow(Model):
+    class Meta:
+        db_table: str = "follow"
+        verbose_name: str = 'Follow'
+        verbose_name_plural: str = 'Follows'
+        ordering: list[str] = ["-created_at"]
+        unique_together: tuple[str, str] = ("user", "topic")
+
+    user: ForeignKey = ForeignKey(to='users.CustomUser', on_delete=CASCADE, related_name="following")
+    topic: ForeignKey = ForeignKey(to=Topic, on_delete=CASCADE, related_name="followers")
+    created_at: DateTimeField = DateTimeField(auto_now_add=True)

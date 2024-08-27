@@ -7,10 +7,11 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from users.authentications import CustomJWTAuthentication
 from .filters import ArticleFilter
-from .models import Article
+from .models import Article, TopicFollow, Topic
 from .serializers import (
     ArticleCreateSerializer,
     ArticleDetailSerializer,
@@ -107,5 +108,53 @@ class ArticlesView(viewsets.ModelViewSet):
 
         article.status = 'trash'
         article.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TopicFollowView(APIView):
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+
+    def post(self, request: HttpRequest, pk: int, *args, **kwargs):
+        topic: Topic | None = Topic.objects.filter(pk=pk).first()
+
+        if topic is None:
+            return Response(
+                data={"detail": "Hech qanday mavzu berilgan soʻrovga mos kelmaydi."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        follow: TopicFollow | None = TopicFollow.objects.filter(user=request.user, topic=topic).first()
+
+        if follow is not None:
+            return Response(
+                data={"detail": f"Siz allaqachon '{topic.name}' mavzusini kuzatyapsiz."},
+                status=status.HTTP_200_OK
+            )
+
+        TopicFollow.objects.create(user=request.user, topic=topic)
+
+        return Response(
+            data={"detail": f"Siz '{topic.name}' mavzusini kuzatyapsiz."},
+            status=status.HTTP_201_CREATED
+        )
+
+    def delete(self, request: HttpRequest, pk: int, *args, **kwargs):
+        topic: Topic | None = Topic.objects.filter(pk=pk).first()
+
+        if topic is None:
+            return Response(
+                data={"detail": "Hech qanday mavzu berilgan soʻrovga mos kelmaydi."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        follow: TopicFollow = TopicFollow.objects.filter(user=request.user, topic=topic).first()
+        if not follow:
+            return Response(
+                data={"detail": f"Siz '{topic.name}' mavzusini kuzatmaysiz."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        follow.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
