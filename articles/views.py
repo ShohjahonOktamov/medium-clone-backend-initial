@@ -52,7 +52,7 @@ from .serializers import (
     )
 )
 class ArticlesView(viewsets.ModelViewSet):
-    queryset: QuerySet = Article.objects.all()
+    queryset: QuerySet = Article.objects.filter(status="-trash")
     filterset_class: Type[ArticleFilter] = ArticleFilter
 
     def get_permissions(self) -> list:
