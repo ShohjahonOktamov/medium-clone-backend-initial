@@ -7,6 +7,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
+from users.authentications import CustomJWTAuthentication
 from .filters import ArticleFilter
 from .models import Article
 from .serializers import (
@@ -74,9 +75,16 @@ class ArticlesView(viewsets.ModelViewSet):
         return Response(data=create_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request: HttpRequest, pk: int, *args, **kwargs):
+
         article: Article | None = get_object_or_404(Article, pk=pk)
-        print(request.user)
-        if request.user != article.author:
+
+        user = CustomJWTAuthentication().authenticate(request=request)
+
+        if user is not None:
+            if user[0] != article.author:
+                return Response(data={'detail': 'You do not have permission to perform this action.'},
+                                status=status.HTTP_403_FORBIDDEN)
+        else:
             return Response(data={'detail': 'You do not have permission to perform this action.'},
                             status=status.HTTP_403_FORBIDDEN)
 
