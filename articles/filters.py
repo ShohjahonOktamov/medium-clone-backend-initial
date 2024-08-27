@@ -1,7 +1,7 @@
 from typing import Type
 
 from django.db.models import QuerySet
-from django_filters import FilterSet, NumberFilter, BooleanFilter
+from django_filters import FilterSet, NumberFilter, BooleanFilter, CharFilter
 
 from .models import Article
 
@@ -16,13 +16,13 @@ class ArticleFilter(FilterSet):
 
     is_recommend: BooleanFilter = BooleanFilter(method="filter_recommend_articles")
 
+    search = CharFilter(field_name='title', lookup_expr='icontains')
+
     def filter_top_articles(self, queryset: QuerySet[Article], name: str, limit: int) -> QuerySet[Article]:
         return queryset.order_by('-views_count')[:limit]
 
     def filter_recommend_articles(self, queryset: QuerySet[Article], name: str, is_recommend: bool) -> QuerySet[
         Article]:
-        print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-
         if is_recommend:
             queryset: QuerySet[Article] = queryset.filter(
                 topics__recommendation__recommendation_type='more'
