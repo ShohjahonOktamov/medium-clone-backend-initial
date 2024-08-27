@@ -1,3 +1,4 @@
+from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.db.models import Model, CharField, TextField, BooleanField, ForeignKey, ImageField, ManyToManyField, \
     DateTimeField, PositiveBigIntegerField, CASCADE
@@ -36,7 +37,7 @@ class Article(Model):
     author: ForeignKey = ForeignKey(to=CustomUser, on_delete=CASCADE, null=True, blank=True)
     title: CharField = CharField(max_length=100)
     summary: CharField = CharField(max_length=200)
-    content: TextField = TextField()
+    content: RichTextField = RichTextField()
     status: CharField = CharField(choices=STATUS_CHOICES, default="pending", max_length=7)
     thumbnail: ImageField = ImageField(upload_to="thumbnails/", blank=True, null=True)
     topics: ManyToManyField = ManyToManyField(to=Topic, blank=True)

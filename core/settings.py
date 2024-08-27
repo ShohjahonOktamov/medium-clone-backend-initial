@@ -50,8 +50,23 @@ EXTERNAL_APPS = [
     'drf_spectacular',
     'django_redis',
     'modeltranslation',
-    'django_filters'
+    'django_filters',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
+
+CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_IMAGE_BACKEND = "pillow"
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+        "versionCheck": False
+    },
+}
 
 LOCAL_APPS = [
     'users',
