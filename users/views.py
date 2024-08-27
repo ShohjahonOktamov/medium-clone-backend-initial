@@ -307,7 +307,7 @@ class ResetPasswordView(generics.UpdateAPIView):
         request=RecommendationSerializer,
         responses={
             204: None,
-            400: 'Invalid data'
+            400: 'Bad Request'
         }
     )
 )

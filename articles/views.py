@@ -50,9 +50,19 @@ from .serializers import (
             404: "Article Does Not Exist"
         }
     )
+    ,
+    partial_update=extend_schema(
+        summary="Update Article",
+        request=ArticleCreateSerializer,
+        responses={
+            200: ArticleDetailSerializer,
+            400: "Bad Request",
+            404: "Article Does Not Exist"
+        }
+    )
 )
 class ArticlesView(viewsets.ModelViewSet):
-    queryset: QuerySet = Article.objects.filter(status="-trash")
+    queryset: QuerySet = Article.objects.exclude(status="trash")
     filterset_class: Type[ArticleFilter] = ArticleFilter
 
     def get_permissions(self) -> list:
@@ -63,13 +73,13 @@ class ArticlesView(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_authenticators(self) -> list[CustomJWTAuthentication] | list:
-        if self.request.method == 'DELETE':
+        if self.request is not None and self.request.method == 'DELETE':
             return [CustomJWTAuthentication()]
         return []
 
     def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
         ArticleListSerializer]:
-        if self.action == 'create':
+        if self.action in ('create', 'partial_update', 'update'):
             return ArticleCreateSerializer
 
         if self.action == 'list':
