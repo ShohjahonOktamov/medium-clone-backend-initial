@@ -68,7 +68,7 @@ from .serializers import (
 class ArticlesView(viewsets.ModelViewSet):
     queryset: QuerySet = Article.objects.exclude(status="trash")
     filterset_class: Type[ArticleFilter] = ArticleFilter
-
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def get_permissions(self) -> list:
         if self.request.method in ('DELETE', 'POST'):
@@ -76,11 +76,6 @@ class ArticlesView(viewsets.ModelViewSet):
         else:
             self.permission_classes = [AllowAny]
         return super().get_permissions()
-
-    def get_authenticators(self) -> list[CustomJWTAuthentication] | list:
-        if self.request is not None and self.request.method == 'DELETE':
-            return [CustomJWTAuthentication()]
-        return []
 
     def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
         ArticleListSerializer]:
