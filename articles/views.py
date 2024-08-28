@@ -69,6 +69,7 @@ class ArticlesView(viewsets.ModelViewSet):
     queryset: QuerySet = Article.objects.exclude(status="trash")
     filterset_class: Type[ArticleFilter] = ArticleFilter
 
+
     def get_permissions(self) -> list:
         if self.request.method in ('DELETE', 'POST'):
             self.permission_classes = [IsAuthenticated]

@@ -3,6 +3,7 @@ from typing import Type
 from django.db.models import QuerySet, Q
 from django_filters import FilterSet, NumberFilter, BooleanFilter, CharFilter
 
+from users.models import CustomUser
 from .models import Article
 
 
@@ -36,3 +37,15 @@ class ArticleFilter(FilterSet):
             Q(content__icontains=value) |
             Q(topics__name__icontains=value)
         ).distinct()
+
+    is_user_favorites: BooleanFilter = BooleanFilter(method='get_user_favorites')
+
+    def get_user_favorites(self, queryset: QuerySet[Article], name: str, is_user_favorites: str) -> QuerySet[Article]:
+        user: CustomUser = self.request.user
+
+        if is_user_favorites:
+            queryset: QuerySet[Article] = queryset.filter(author__favorites__user=user).distinct()
+            return queryset
+
+        queryset: QuerySet[Article] = queryset.exclude(author__favorites__user=user).distinct()
+        return queryset

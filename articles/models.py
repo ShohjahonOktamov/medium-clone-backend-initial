@@ -1,7 +1,7 @@
 from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.db.models import Model, CharField, TextField, BooleanField, ForeignKey, ImageField, ManyToManyField, \
-    DateTimeField, PositiveBigIntegerField, CASCADE
+    DateTimeField, PositiveBigIntegerField, CASCADE, UniqueConstraint
 
 from users.models import CustomUser
 
@@ -55,12 +55,17 @@ class Clap(Model):
         db_table: str = "clap"
         verbose_name: str = 'Clap'
         verbose_name_plural: str = 'Claps'
-        unique_together: tuple[str, str] = ("article", "user")
+        constraints: list[UniqueConstraint] = [
+            UniqueConstraint(fields=["user", "article"], name="unique_clap")
+        ]
 
     article: ForeignKey = ForeignKey(to=Article, on_delete=CASCADE, related_name="claps")
     user: ForeignKey = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE)
     created_at: DateTimeField = DateTimeField(auto_now_add=True)
     updated_at: DateTimeField = DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.user.username} clapped {self.article.name}"
 
 
 class Comment(Model):
@@ -77,6 +82,9 @@ class Comment(Model):
     updated_at: DateTimeField = DateTimeField(auto_now_add=True)
     parent: ForeignKey = ForeignKey(to='self', null=True, on_delete=CASCADE, related_name='replies')
 
+    def __str__(self) -> str:
+        return f"{self.user.username} commented {self.article.name}"
+
 
 class TopicFollow(Model):
     class Meta:
@@ -84,11 +92,16 @@ class TopicFollow(Model):
         verbose_name: str = 'Follow'
         verbose_name_plural: str = 'Follows'
         ordering: list[str] = ["-created_at"]
-        unique_together: tuple[str, str] = ("user", "topic")
+        constraints: list[UniqueConstraint] = [
+            UniqueConstraint(fields=["user", "topic"], name="unique_follow")
+        ]
 
     user: ForeignKey = ForeignKey(to='users.CustomUser', on_delete=CASCADE, related_name="following")
     topic: ForeignKey = ForeignKey(to=Topic, on_delete=CASCADE, related_name="followers")
     created_at: DateTimeField = DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.user.username} followed {self.topic.name}"
 
 
 class Favorite(Model):
@@ -97,7 +110,13 @@ class Favorite(Model):
         verbose_name: str = 'Favorite'
         verbose_name_plural: str = 'Favorites'
         ordering: list[str] = ["-created_at"]
-        unique_together: tuple[str, str] = ("user", "article")
+        constraints: list[UniqueConstraint] = [
+            UniqueConstraint(fields=["user", "article"], name="unique_favorite")
+        ]
 
-    user: ForeignKey = ForeignKey(to="users.CustomUser", related_name="favorites")
-    article: ForeignKey = ForeignKey(to=Article)
+    user: ForeignKey = ForeignKey(to="users.CustomUser", related_name="favorites", on_delete=CASCADE)
+    article: ForeignKey = ForeignKey(to=Article, related_name="favorited_by", on_delete=CASCADE)
+    created_at: DateTimeField = DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.user.username} favorited {self.article.name}"
