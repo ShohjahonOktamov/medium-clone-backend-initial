@@ -64,6 +64,12 @@ class CommentSerializer(serializers.ModelSerializer):
             'user': {'write_only': True}
         }
 
+    def validate(self, data: dict[str, int | str]):
+        article: Article | None = Article.objects.filter(pk=data['article']).first()
+        if not article or article.status != 'publish':
+            raise serializers.ValidationError("Cannot add comments to articles that are not published.")
+        return data
+
 
 class ArticleDetailCommentSerializer(serializers.ModelSerializer):
     class Meta:

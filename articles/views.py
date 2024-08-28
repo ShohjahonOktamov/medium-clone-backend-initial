@@ -170,10 +170,13 @@ class CreateCommentsView(APIView):
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        article: Article | None = get_object_or_404(Article, pk=pk)
+        article: Article = get_object_or_404(Article, pk=pk)
 
+        if article.status != 'published':
+            return Response(data={"detail": "Article is not published"},
+                            status=status.HTTP_404_NOT_FOUND)
         data: dict[str, int | str] = {
-            'user': request.user.id,
+            'user': request.user,
             'article': article.id,
             'content': request.data.get('content'),
             'parent': request.data.get('parent')
