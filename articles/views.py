@@ -106,7 +106,7 @@ class ArticlesView(viewsets.ModelViewSet):
 
         article: Article | None = get_object_or_404(Article, pk=pk)
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return Response(data={'detail': 'Authentication credentials were not provided.'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
@@ -206,7 +206,7 @@ class CommentsView(viewsets.ModelViewSet):
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def partial_update(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return Response(data={'detail': 'Authentication credentials were not provided.'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
@@ -227,7 +227,7 @@ class CommentsView(viewsets.ModelViewSet):
     def destroy(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         comment: Comment = get_object_or_404(Comment, pk=pk)
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return Response(data={'detail': 'Authentication credentials were not provided.'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
@@ -281,7 +281,7 @@ class FavoriteArticleView(APIView):
     queryset: QuerySet[Favorite] = Favorite.objects.all()
 
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return Response(data={'detail': 'Authentication credentials were not provided.'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
@@ -306,7 +306,7 @@ class FavoriteArticleView(APIView):
         }, status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return Response(data={'detail': 'Authentication credentials were not provided.'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
