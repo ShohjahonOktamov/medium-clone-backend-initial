@@ -33,16 +33,6 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         fields: tuple[str] = ("title", "summary", "content", "topic_ids")
 
 
-class ArticleDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model: Type[Article] = Article
-        fields: list[str] = ["id", "author", "title", "summary", "content", "status", "thumbnail", "views_count",
-                             "reads_count", "topics",
-                             "created_at", "updated_at", "claps"]
-
-    author: UserSerializer = UserSerializer()
-    topics: TopicSerializer = TopicSerializer(many=True)
-    claps: ClapSerializer = ClapSerializer(many=True)
 
 
 class ArticleListSerializer(serializers.ModelSerializer):
@@ -82,3 +72,16 @@ class ArticleDetailCommentsSerializer(serializers.ModelSerializer):
     def get_replies(self, comment: Comment) -> dict[str, int | list | str]:
         replies: QuerySet[Comment] = comment.replies.all()
         return ArticleDetailCommentsSerializer(instance=replies, many=True).data
+
+
+class ArticleDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model: Type[Article] = Article
+        fields: list[str] = ["id", "author", "title", "summary", "content", "status", "thumbnail", "views_count",
+                             "reads_count", "topics",
+                             "created_at", "updated_at", "claps", "comments"]
+
+    author: UserSerializer = UserSerializer()
+    topics: TopicSerializer = TopicSerializer(many=True)
+    claps: ClapSerializer = ClapSerializer(many=True)
+    comments: ArticleDetailCommentsSerializer = ArticleDetailCommentsSerializer(many=True)
