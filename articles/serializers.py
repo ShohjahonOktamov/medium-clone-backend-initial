@@ -16,9 +16,11 @@ class TopicSerializer(serializers.ModelSerializer):
 class ClapSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clap
-        fields = ['user']
-
-    user = UserSerializer()
+        fields = ['user', 'article']
+        extra_kwargs: dict[str, dict[str, bool]] = {
+            'user': {'write_only': True},
+            'article': {'write_only': True}
+        }
 
 
 class ArticleCreateSerializer(serializers.ModelSerializer):
@@ -31,8 +33,6 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Article] = Article
         fields: tuple[str] = ("title", "summary", "content", "topic_ids")
-
-
 
 
 class ArticleListSerializer(serializers.ModelSerializer):
@@ -84,4 +84,3 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
     author: UserSerializer = UserSerializer()
     topics: TopicSerializer = TopicSerializer(many=True)
     claps: ClapSerializer = ClapSerializer(many=True)
-

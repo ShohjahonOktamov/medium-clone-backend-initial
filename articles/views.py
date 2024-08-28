@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.contrib.auth.models import AnonymousUser
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -11,14 +12,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.authentications import CustomJWTAuthentication
+from users.models import CustomUser
+from users.serializers import UserSerializer
 from .filters import ArticleFilter
-from .models import Article, TopicFollow, Topic, Comment, Favorite
+from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap
 from .serializers import (
     ArticleCreateSerializer,
     ArticleDetailSerializer,
     ArticleListSerializer,
     CommentSerializer,
-    ArticleDetailCommentsSerializer
+    ArticleDetailCommentsSerializer,
+    ClapSerializer
 )
 
 
@@ -321,3 +325,51 @@ class FavoriteArticleView(APIView):
         return Response(data={
             "detail": "Maqola topilmadi."
         }, status=status.HTTP_404_NOT_FOUND)
+
+
+class ClapView(APIView):
+    def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        user: CustomUser | AnonymousUser = request.user
+
+        if not user.is_authenticated:
+            return Response({'detail': 'Authentication credentials were not provided.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        if not Article.objects.filter(pk=pk).exists():
+            return Response({'detail': 'Article not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        clap_count: int = Clap.objects.filter(user=user, article_id=pk).count()
+
+        if clap_count >= 50:
+            return Response(data={'detail': 'Maximum clap limit reached for this article.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        serializer: ClapSerializer = ClapSerializer(data={'user': user.id, 'article': pk})
+        if serializer.is_valid():
+            serializer.save()
+
+            data: dict[str, dict[str, str | int] | int] = {
+                'user': UserSerializer(user).data,
+                'article': pk,
+                'count': clap_count + 1
+            }
+
+            return Response(data=data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        user: CustomUser | AnonymousUser = request.user
+
+        if not user.is_authenticated:
+            return Response(data={'detail': 'Authentication credentials were not provided.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        if not Article.objects.filter(pk=pk).exists():
+            return Response(data={'detail': 'Article not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        claps_deleted: int = Clap.objects.filter(user=request.user, article_id=pk).delete()[0]
+
+        if claps_deleted == 0:
+            return Response(data={'detail': 'No claps found to delete.'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
