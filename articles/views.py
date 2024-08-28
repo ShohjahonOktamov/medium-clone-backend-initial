@@ -176,7 +176,7 @@ class CreateCommentsView(APIView):
             return Response(data={"detail": "Article is deleted and cannot accept comments"},
                             status=status.HTTP_404_NOT_FOUND)
         data: dict[str, int | str] = {
-            'user': request.user,
+            'user': request.user.id,
             'article': article.id,
             'content': request.data.get('content'),
             'parent': request.data.get('parent')
@@ -191,7 +191,7 @@ class CreateCommentsView(APIView):
 
             return Response(data=comment_data.data, status=status.HTTP_201_CREATED)
 
-        return Response(data=serializer.errors, status=status.HTTP_404_NOT_FOUND)
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentsView(viewsets.ModelViewSet):
