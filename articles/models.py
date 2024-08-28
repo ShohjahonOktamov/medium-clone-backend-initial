@@ -69,13 +69,13 @@ class Comment(Model):
         verbose_name: str = 'Comment'
         verbose_name_plural: str = 'Comments'
         ordering: list[str] = ["-created_at"]
-        unique_together: tuple[str, str] = ("article", "user")
 
     article: ForeignKey = ForeignKey(to=Article, on_delete=CASCADE, related_name="comments")
     user: ForeignKey = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE)
-    text: TextField = TextField()
+    content: RichTextField = RichTextField()
     created_at: DateTimeField = DateTimeField(auto_now_add=True)
     updated_at: DateTimeField = DateTimeField(auto_now_add=True)
+    parent: ForeignKey = ForeignKey(to='self', null=True, on_delete=CASCADE, related_name='replies')
 
 
 class TopicFollow(Model):

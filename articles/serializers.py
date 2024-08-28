@@ -1,9 +1,10 @@
 from typing import Type
 
+from django.db.models import QuerySet
 from rest_framework import serializers
 
 from users.serializers import UserSerializer
-from .models import Article, Topic, Clap
+from .models import Article, Topic, Clap, Comment
 
 
 class TopicSerializer(serializers.ModelSerializer):
@@ -52,3 +53,26 @@ class ArticleListSerializer(serializers.ModelSerializer):
     author: UserSerializer = UserSerializer()
     topics: TopicSerializer = TopicSerializer(many=True)
     claps: ClapSerializer = ClapSerializer(many=True)
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model: Type[Comment] = Comment
+        fields: tuple[str] = ('article', 'user', 'content', 'parent')
+        extra_kwargs: dict[str, dict[str, bool]] = {
+            'article': {'write_only': True},
+            'user': {'write_only': True}
+        }
+
+
+class ArticleDetailCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model: Type[Comment] = Comment
+        fields: str = ["id", "article", "user", "parent", "content", "created_at", "updated_at", "replies"]
+
+    user: UserSerializer = UserSerializer()
+    replies: serializers.SerializerMethodField = serializers.SerializerMethodField(method_name="get_replies")
+
+    def get_replies(self, comment: Comment) -> dict[str, int | list | str]:
+        replies: QuerySet[Comment] = comment.replies.all()
+        return ArticleDetailCommentSerializer(instance=replies, many=True).data

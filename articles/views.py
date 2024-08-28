@@ -5,17 +5,20 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets, status
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.authentications import CustomJWTAuthentication
 from .filters import ArticleFilter
-from .models import Article, TopicFollow, Topic
+from .models import Article, TopicFollow, Topic, Comment
 from .serializers import (
     ArticleCreateSerializer,
     ArticleDetailSerializer,
-    ArticleListSerializer
+    ArticleListSerializer,
+    CommentSerializer,
+    ArticleDetailCommentSerializer
 )
 
 
@@ -67,7 +70,7 @@ class ArticlesView(viewsets.ModelViewSet):
     filterset_class: Type[ArticleFilter] = ArticleFilter
 
     def get_permissions(self) -> list:
-        if self.request.method == 'DELETE':
+        if self.request.method in ('DELETE', 'POST'):
             self.permission_classes = [IsAuthenticated]
         else:
             self.permission_classes = [AllowAny]
@@ -89,7 +92,7 @@ class ArticlesView(viewsets.ModelViewSet):
         return ArticleDetailSerializer
 
     def create(self, request: HttpRequest, *args, **kwargs) -> Response:
-        create_serializer: ArticleCreateSerializer = self.get_serializer(data=request.data)
+        create_serializer: ArticleCreateSerializer = self.get_serializer(data={**request.data, "author": request.user})
 
         if create_serializer.is_valid():
             article: Article = create_serializer.save()
@@ -158,3 +161,53 @@ class TopicFollowView(APIView):
         follow.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CreateCommentsView(APIView):
+    serializer_class: Type[CommentSerializer] = CommentSerializer
+    queryset: QuerySet = Comment.objects.all()
+    permission_classes = [IsAuthenticated]
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+
+    def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        article: Article | None = get_object_or_404(Article, pk=pk)
+
+        data: dict[str, int | str] = {
+            'user': request.user.id,
+            'article': article.id,
+            'content': request.data.get('content'),
+            'parent': request.data.get('parent')
+        }
+
+        serializer: CommentSerializer = self.serializer_class(data=data)
+
+        if serializer.is_valid():
+            comment: Comment = serializer.save()
+
+            comment_data: ArticleDetailCommentSerializer = ArticleDetailCommentSerializer(instance=comment)
+
+            return Response(data=comment_data.data, status=status.HTTP_201_CREATED)
+
+        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CommentsView(viewsets.ModelViewSet):
+    serializer_class: Type[CommentSerializer] = CommentSerializer
+    queryset: QuerySet[Comment] = Comment.objects.all()
+
+    def partial_update(self, request: HttpRequest, *args, **kwargs) -> Response:
+        response: Response = super().partial_update(request, *args, **kwargs)
+
+        article: Article = self.get_object()
+
+        detail_serializer: ArticleDetailCommentSerializer = ArticleDetailCommentSerializer(article)
+
+        return Response(detail_serializer.data, status=status.HTTP_200_OK)
+
+
+class ArticleDetailCommentsView(ListAPIView):
+    serializer_class: Type[ArticleDetailCommentSerializer] = ArticleDetailCommentSerializer
+
+    def get_queryset(self) -> QuerySet[Comment]:
+        article_id: int = self.kwargs.get('pk')
+        return Comment.objects.filter(article_id=article_id)
