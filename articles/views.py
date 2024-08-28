@@ -244,3 +244,34 @@ class ArticleDetailCommentsView(ListAPIView):
     def get_queryset(self) -> QuerySet[Comment]:
         article_id: int = self.kwargs.get('pk')
         return Comment.objects.filter(article_id=article_id)
+
+    def list(self, request, *args, **kwargs):
+        queryset: QuerySet[Comment] = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer: ArticleDetailCommentsSerializer = self.get_serializer(page, many=True)
+            paginated_data: Response = self.get_paginated_response(serializer.data).data
+
+            data: dict = {
+                "count": paginated_data["count"],
+                "next": paginated_data["next"],
+                "previous": paginated_data["previous"],
+                "results": [
+                    {
+                        "comments": paginated_data["results"]
+                    }
+                ]
+            }
+
+            return Response(data)
+
+        serializer: ArticleDetailCommentsSerializer = self.get_serializer(queryset, many=True)
+        data: dict = {
+            "results": [
+                {
+                    "comments": serializer.data
+                }
+            ]
+        }
+        return Response(data)

@@ -84,4 +84,4 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
     author: UserSerializer = UserSerializer()
     topics: TopicSerializer = TopicSerializer(many=True)
     claps: ClapSerializer = ClapSerializer(many=True)
-    comments: ArticleDetailCommentsSerializer = ArticleDetailCommentsSerializer(many=True)
+
