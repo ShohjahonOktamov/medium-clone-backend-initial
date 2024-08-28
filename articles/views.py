@@ -191,7 +191,7 @@ class CreateCommentsView(APIView):
 
             return Response(data=comment_data.data, status=status.HTTP_201_CREATED)
 
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=serializer.errors, status=status.HTTP_404_NOT_FOUND)
 
 
 class CommentsView(viewsets.ModelViewSet):
