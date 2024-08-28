@@ -1,5 +1,6 @@
 from typing import Type
 
+from django.contrib.auth.models import AnonymousUser
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -105,6 +106,10 @@ class ArticlesView(viewsets.ModelViewSet):
 
         article: Article | None = get_object_or_404(Article, pk=pk)
 
+        if request.user == AnonymousUser:
+            return Response(data={'detail': 'Authentication credentials were not provided.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
         if request.user != article.author:
             return Response(data={'detail': 'You do not have permission to perform this action.'},
                             status=status.HTTP_403_FORBIDDEN)
@@ -208,6 +213,19 @@ class CommentsView(viewsets.ModelViewSet):
         detail_serializer: ArticleDetailCommentSerializer = ArticleDetailCommentSerializer(article)
 
         return Response(detail_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        comment: Comment = get_object_or_404(Comment, pk=pk)
+
+        if request.user == AnonymousUser:
+            return Response(data={'detail': 'Authentication credentials were not provided.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        if request.user != comment.user:
+            return Response(data={'detail': 'You do not have permission to perform this action.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        return super().destroy(request=request, *args, **kwargs)
 
 
 class ArticleDetailCommentsView(ListAPIView):
