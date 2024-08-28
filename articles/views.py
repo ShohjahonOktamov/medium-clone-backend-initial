@@ -197,6 +197,8 @@ class CreateCommentsView(APIView):
 class CommentsView(viewsets.ModelViewSet):
     serializer_class: Type[CommentSerializer] = CommentSerializer
     queryset: QuerySet[Comment] = Comment.objects.all()
+    permission_classes: list[Type[IsAuthenticated]] = [IsAuthenticated]
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def partial_update(self, request: HttpRequest, *args, **kwargs) -> Response:
         response: Response = super().partial_update(request, *args, **kwargs)
