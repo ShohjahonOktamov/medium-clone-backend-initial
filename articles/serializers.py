@@ -66,8 +66,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def validate(self, data: dict[str, int | str]):
         article: Article | None = Article.objects.filter(pk=data['article']).first()
-        if not article or article.status != 'publish':
-            raise serializers.ValidationError("Cannot add comments to articles that are not published.")
+        if not article or article.status == 'trash':
+            raise serializers.ValidationError("Cannot add comments to articles that are deleted.")
         return data
 
 
