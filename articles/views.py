@@ -165,8 +165,8 @@ class TopicFollowView(APIView):
 
 class CreateCommentsView(APIView):
     serializer_class: Type[CommentSerializer] = CommentSerializer
-    queryset: QuerySet = Comment.objects.all()
-    permission_classes = [IsAuthenticated]
+    queryset: QuerySet[Comment] = Comment.objects.all()
+    permission_classes: list[Type[IsAuthenticated]] = [IsAuthenticated]
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
