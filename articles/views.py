@@ -172,7 +172,7 @@ class CreateCommentsView(APIView):
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         article: Article = get_object_or_404(Article, pk=pk)
 
-        if article.status in ('publish', 'pending'):
+        if article.status not in ('publish', 'pending'):
             return Response(data={"detail": "Article is deleted and cannot accept comments"},
                             status=status.HTTP_404_NOT_FOUND)
         data: dict[str, int | str] = {
