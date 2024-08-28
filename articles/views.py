@@ -205,7 +205,17 @@ class CommentsView(viewsets.ModelViewSet):
     permission_classes: list[Type[IsAuthenticated]] = [IsAuthenticated]
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
-    def partial_update(self, request: HttpRequest, *args, **kwargs) -> Response:
+    def partial_update(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        if request.user == AnonymousUser:
+            return Response(data={'detail': 'Authentication credentials were not provided.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        comment: Comment = get_object_or_404(Comment, pk=pk)
+
+        if request.user != comment.user:
+            return Response(data={'detail': 'You do not have permission to perform this action.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
         response: Response = super().partial_update(request, *args, **kwargs)
 
         article: Article = self.get_object()
