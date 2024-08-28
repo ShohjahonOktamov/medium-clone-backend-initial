@@ -89,3 +89,15 @@ class TopicFollow(Model):
     user: ForeignKey = ForeignKey(to='users.CustomUser', on_delete=CASCADE, related_name="following")
     topic: ForeignKey = ForeignKey(to=Topic, on_delete=CASCADE, related_name="followers")
     created_at: DateTimeField = DateTimeField(auto_now_add=True)
+
+
+class Favorite(Model):
+    class Meta:
+        db_table: str = "favorite"
+        verbose_name: str = 'Favorite'
+        verbose_name_plural: str = 'Favorites'
+        ordering: list[str] = ["-created_at"]
+        unique_together: tuple[str, str] = ("user", "article")
+
+    user: ForeignKey = ForeignKey(to="users.CustomUser", related_name="favorites")
+    article: ForeignKey = ForeignKey(to=Article)

@@ -1,6 +1,5 @@
 from typing import Type
 
-from django.contrib.auth.models import AnonymousUser
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -13,7 +12,7 @@ from rest_framework.views import APIView
 
 from users.authentications import CustomJWTAuthentication
 from .filters import ArticleFilter
-from .models import Article, TopicFollow, Topic, Comment
+from .models import Article, TopicFollow, Topic, Comment, Favorite
 from .serializers import (
     ArticleCreateSerializer,
     ArticleDetailSerializer,
@@ -106,7 +105,7 @@ class ArticlesView(viewsets.ModelViewSet):
 
         article: Article | None = get_object_or_404(Article, pk=pk)
 
-        if request.user == AnonymousUser:
+        if not request.user.is_authenticated():
             return Response(data={'detail': 'Authentication credentials were not provided.'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
@@ -206,7 +205,7 @@ class CommentsView(viewsets.ModelViewSet):
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def partial_update(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        if request.user == AnonymousUser:
+        if not request.user.is_authenticated():
             return Response(data={'detail': 'Authentication credentials were not provided.'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
@@ -227,7 +226,7 @@ class CommentsView(viewsets.ModelViewSet):
     def destroy(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         comment: Comment = get_object_or_404(Comment, pk=pk)
 
-        if request.user == AnonymousUser:
+        if not request.user.is_authenticated():
             return Response(data={'detail': 'Authentication credentials were not provided.'},
                             status=status.HTTP_401_UNAUTHORIZED)
 
@@ -275,3 +274,54 @@ class ArticleDetailCommentsView(ListAPIView):
             ]
         }
         return Response(data)
+
+
+class FavoriteArticleView(APIView):
+    queryset: QuerySet[Favorite] = Favorite.objects.all()
+
+    def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        if not request.user.is_authenticated():
+            return Response(data={'detail': 'Authentication credentials were not provided.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        article: Article = Article.objects.filter(pk=pk, status="publish").first()
+
+        if article is not None:
+            favorite: Favorite | None = Favorite.objects.filter(user=request.user, article=article).first()
+
+            if favorite is None:
+                Favorite.objects.create(user=request.user, article=article)
+
+                return Response(data={
+                    "detail": "Maqola sevimlilarga qo'shildi."
+                }, status=status.HTTP_201_CREATED)
+
+            return Response(data={
+                "detail": "Maqola sevimlilarga allaqachon qo'shilgan."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={
+            "detail": "Maqola topilmadi."
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        if not request.user.is_authenticated():
+            return Response(data={'detail': 'Authentication credentials were not provided.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        article: Article = Article.objects.filter(pk=pk, status="publish").first()
+
+        if article is not None:
+            favorite: Favorite | None = Favorite.objects.filter(user=request.user, article=article).first()
+
+            if favorite is not None:
+                favorite.delete()
+
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            return Response(data={"Maqola foydalanuvchining sevimlilariga qo'shilmagan."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={
+            "detail": "Maqola topilmadi."
+        }, status=status.HTTP_404_NOT_FOUND)
