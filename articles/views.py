@@ -19,7 +19,7 @@ from .serializers import (
     ArticleDetailSerializer,
     ArticleListSerializer,
     CommentSerializer,
-    ArticleDetailCommentSerializer
+    ArticleDetailCommentsSerializer
 )
 
 
@@ -192,7 +192,7 @@ class CreateCommentsView(APIView):
         if serializer.is_valid():
             comment: Comment = serializer.save()
 
-            comment_data: ArticleDetailCommentSerializer = ArticleDetailCommentSerializer(instance=comment)
+            comment_data: ArticleDetailCommentsSerializer = ArticleDetailCommentsSerializer(instance=comment)
 
             return Response(data=comment_data.data, status=status.HTTP_201_CREATED)
 
@@ -220,7 +220,7 @@ class CommentsView(viewsets.ModelViewSet):
 
         article: Article = self.get_object()
 
-        detail_serializer: ArticleDetailCommentSerializer = ArticleDetailCommentSerializer(article)
+        detail_serializer: ArticleDetailCommentsSerializer = ArticleDetailCommentsSerializer(article)
 
         return Response(detail_serializer.data, status=status.HTTP_200_OK)
 
@@ -239,7 +239,7 @@ class CommentsView(viewsets.ModelViewSet):
 
 
 class ArticleDetailCommentsView(ListAPIView):
-    serializer_class: Type[ArticleDetailCommentSerializer] = ArticleDetailCommentSerializer
+    serializer_class: Type[ArticleDetailCommentsSerializer] = ArticleDetailCommentsSerializer
 
     def get_queryset(self) -> QuerySet[Comment]:
         article_id: int = self.kwargs.get('pk')

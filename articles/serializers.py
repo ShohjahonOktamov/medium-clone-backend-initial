@@ -71,7 +71,7 @@ class CommentSerializer(serializers.ModelSerializer):
     #     return data
 
 
-class ArticleDetailCommentSerializer(serializers.ModelSerializer):
+class ArticleDetailCommentsSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Comment] = Comment
         fields: str = ["id", "article", "user", "parent", "content", "created_at", "updated_at", "replies"]
@@ -81,4 +81,4 @@ class ArticleDetailCommentSerializer(serializers.ModelSerializer):
 
     def get_replies(self, comment: Comment) -> dict[str, int | list | str]:
         replies: QuerySet[Comment] = comment.replies.all()
-        return ArticleDetailCommentSerializer(instance=replies, many=True).data
+        return ArticleDetailCommentsSerializer(instance=replies, many=True).data
