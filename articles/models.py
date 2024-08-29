@@ -1,7 +1,7 @@
 from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.db.models import Model, CharField, TextField, BooleanField, ForeignKey, ImageField, ManyToManyField, \
-    DateTimeField, PositiveBigIntegerField, CASCADE, UniqueConstraint
+    DateTimeField, PositiveBigIntegerField, CASCADE, UniqueConstraint, PositiveSmallIntegerField
 
 from users.models import CustomUser
 
@@ -55,10 +55,14 @@ class Clap(Model):
         db_table: str = "clap"
         verbose_name: str = 'Clap'
         verbose_name_plural: str = 'Claps'
+        constraints: list[UniqueConstraint] = [
+            UniqueConstraint(fields=["user", "article"], name="unique_clap")
+        ]
 
     article: ForeignKey = ForeignKey(to=Article, on_delete=CASCADE, related_name="claps")
     user: ForeignKey = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE)
     created_at: DateTimeField = DateTimeField(auto_now_add=True)
+    count: PositiveSmallIntegerField = PositiveSmallIntegerField(default=1)
 
     def __str__(self) -> str:
         return f"{self.user.username} clapped {self.article.name}"

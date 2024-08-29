@@ -15,11 +15,11 @@ class TopicSerializer(serializers.ModelSerializer):
 
 class ClapSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Clap
-        fields = ['user', 'article']
+        model: Type[Clap] = Clap
+        fields: list[str, str, str] = ['user', 'article', 'count']
         extra_kwargs: dict[str, dict[str, bool]] = {
             'user': {'write_only': True},
-            'article': {'write_only': True}
+            'article': {'write_only': True},
         }
 
 
