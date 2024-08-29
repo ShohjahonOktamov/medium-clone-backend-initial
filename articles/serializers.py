@@ -104,3 +104,6 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
 
     def get_article_comments_count(self, article: Article) -> int:
         return Comment.objects.filter(article=article).count()
+
+
+

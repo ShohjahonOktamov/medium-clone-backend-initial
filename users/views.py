@@ -1,13 +1,16 @@
 from secrets import token_urlsafe
+from typing import Type, Any
 
 from django.contrib.auth import authenticate, get_user_model, update_session_auth_hash
 from django.contrib.auth.hashers import make_password
+from django.db.models import Max, QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from django_redis import get_redis_connection
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, permissions, generics, parsers, exceptions
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,7 +18,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from articles.models import Article
 from .errors import ACTIVE_USER_NOT_FOUND_ERROR_MSG
-from .models import Recommendation
+from .models import CustomUser, Recommendation
 from .serializers import (
     UserSerializer,
     LoginSerializer,
@@ -343,3 +346,19 @@ class RecommendationView(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class PopularAuthorsView(ListAPIView):
+    serializer_class: Type[UserSerializer] = UserSerializer
+
+    def get_queryset(self) -> QuerySet[CustomUser]:
+        authors_with_best_articles: QuerySet[dict[str, Any]] = Article.objects.values('author__id').annotate(
+            max_reads=Max('reads_count')
+        )
+
+        top_authors: QuerySet[dict[str, Any]] = authors_with_best_articles.order_by('-max_reads')[:5]
+
+        top_author_ids: list[int] = [author['author__id'] for author in top_authors]
+
+        queryset: QuerySet[CustomUser] = CustomUser.objects.filter(id__in=top_author_ids)
+
+        return queryset

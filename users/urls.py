@@ -12,5 +12,6 @@ urlpatterns: list = [
     path('password/forgot/verify/<str:otp_secret>/', views.ForgotPasswordVerifyView.as_view(),
          name="forgot-verify"),
     path('password/reset/', views.ResetPasswordView.as_view(), name='reset-password'),
-    path('recommend/', views.RecommendationView.as_view(), name='recommendation')
+    path('recommend/', views.RecommendationView.as_view(), name='recommendation'),
+    path('articles/popular/', views.PopularAuthorsView.as_view(), name='users-top-authors')
 ]
