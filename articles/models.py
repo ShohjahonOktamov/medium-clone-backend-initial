@@ -62,7 +62,7 @@ class Clap(Model):
     article: ForeignKey = ForeignKey(to=Article, on_delete=CASCADE, related_name="claps")
     user: ForeignKey = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE)
     created_at: DateTimeField = DateTimeField(auto_now_add=True)
-    count: PositiveSmallIntegerField = PositiveSmallIntegerField(default=1)
+    count: PositiveSmallIntegerField = PositiveSmallIntegerField(default=0)
 
     def __str__(self) -> str:
         return f"{self.user.username} clapped {self.article.name}"

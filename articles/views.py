@@ -337,7 +337,7 @@ class ClapView(APIView):
 
         article: Article = get_object_or_404(Article, pk=pk)
 
-        clap, created = Clap.objects.get_or_create(user=user, article=article)
+        clap: Clap = Clap.objects.get_or_create(user=user, article=article)[0]
 
         if clap.count >= 50:
             return Response(data={'detail': 'Maximum clap limit reached for this article.'},
