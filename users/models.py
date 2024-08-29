@@ -114,6 +114,6 @@ class Follow(models.Model):
         models.UniqueConstraint(fields=["user", "author"], name="unique_author_follow")
     ]
 
-    user: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followings", on_delete=models.CASCADE)
-    author: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followers", on_delete=models.CASCADE)
+    follower: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followings", on_delete=models.CASCADE)
+    followee: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followers", on_delete=models.CASCADE)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)

@@ -374,12 +374,12 @@ class AuthorFollowView(APIView):
 
         author: CustomUser = get_object_or_404(CustomUser, pk=pk)
 
-        if Follow.objects.filter(author=author, user=user).exists():
+        if Follow.objects.filter(followee=author, follower=user).exists():
             return Response(data={
                 "detail": "Siz allaqachon ushbu foydalanuvchini kuzatyapsiz."
             }, status=status.HTTP_200_OK)
 
-        Follow.objects.create(author=author, user=user)
+        Follow.objects.create(followee=author, follower=user)
 
         return Response(data={
             "detail": "Mofaqqiyatli follow qilindi."
@@ -390,7 +390,7 @@ class AuthorFollowView(APIView):
 
         author: CustomUser = get_object_or_404(CustomUser, pk=pk)
 
-        follow: Follow = get_object_or_404(Follow, author=author, user=user)
+        follow: Follow = get_object_or_404(Follow, followee=author, follower=user)
 
         follow.delete()
 
@@ -405,7 +405,7 @@ class FollowersListView(ListAPIView):
     def get_queryset(self) -> QuerySet[CustomUser]:
         author: CustomUser = self.request.user
 
-        return CustomUser.objects.filter(followings__author=author)
+        return CustomUser.objects.filter(followings__followee=author)
 
 
 class FollowingsListView(ListAPIView):
@@ -416,4 +416,4 @@ class FollowingsListView(ListAPIView):
     def get_queryset(self) -> QuerySet[CustomUser]:
         user: CustomUser = self.request.user
 
-        return CustomUser.objects.filter(followers__user=user)
+        return CustomUser.objects.filter(followers__follower=user)
