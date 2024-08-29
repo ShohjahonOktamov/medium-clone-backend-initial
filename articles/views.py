@@ -340,7 +340,9 @@ class ClapView(APIView):
         clap: Clap = Clap.objects.get_or_create(user=user, article=article)[0]
 
         if clap.count >= 50:
-            return Response(data={'detail': 'Maximum clap limit reached for this article.'},
+            serializer: ClapSerializer = ClapSerializer(instance=clap, partial=True)
+
+            return Response(data=serializer.data,
                             status=status.HTTP_201_CREATED)
 
         clap.count += 1
