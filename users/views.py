@@ -414,6 +414,6 @@ class FollowingsListView(ListAPIView):
     permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
 
     def get_queryset(self) -> QuerySet[CustomUser]:
-        author: CustomUser = self.request.user
+        user: CustomUser = self.request.user
 
-        return CustomUser.objects.filter(followings__id=author)
+        return CustomUser.objects.filter(followers__user=user)
