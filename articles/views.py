@@ -378,4 +378,4 @@ class ClapView(APIView):
 
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        return Response(data={"detail": "Clap Not Found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data={"detail": "Clap Not found."}, status=status.HTTP_404_NOT_FOUND)
