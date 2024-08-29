@@ -371,8 +371,11 @@ class ClapView(APIView):
 
         article: Article = get_object_or_404(Article, pk=pk)
 
-        clap: Clap = get_object_or_404(Clap, article=article, user=user)
+        clap: Clap = Clap.objects.filter(article=article, user=user).first()
 
-        clap.delete()
+        if clap is not None:
+            clap.delete()
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        return Response(data={"detail": "Clap Not Found."}, status=status.HTTP_404_NOT_FOUND)
