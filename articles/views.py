@@ -341,7 +341,7 @@ class ClapView(APIView):
 
         if clap.count >= 50:
             return Response(data={'detail': 'Maximum clap limit reached for this article.'},
-                            status=status.HTTP_400_BAD_REQUEST)
+                            status=status.HTTP_201_CREATED)
 
         clap.count += 1
 
