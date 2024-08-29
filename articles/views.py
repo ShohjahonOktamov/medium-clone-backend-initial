@@ -1,6 +1,5 @@
 from typing import Type, Any
 
-from django.contrib.auth.models import AnonymousUser
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -146,6 +145,7 @@ class ArticlesView(viewsets.ModelViewSet):
 
 
 class TopicFollowView(APIView):
+    permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def post(self, request: HttpRequest, pk: int, *args, **kwargs):
@@ -157,15 +157,15 @@ class TopicFollowView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        follow: TopicFollow | None = TopicFollow.objects.filter(user=request.user, topic=topic).first()
+        user:CustomUser = request.user
 
-        if follow is not None:
+        if TopicFollow.objects.filter(user=user, topic=topic).exists():
             return Response(
                 data={"detail": f"Siz allaqachon '{topic.name}' mavzusini kuzatyapsiz."},
                 status=status.HTTP_200_OK
             )
 
-        TopicFollow.objects.create(user=request.user, topic=topic)
+        TopicFollow.objects.create(user=user, topic=topic)
 
         return Response(
             data={"detail": f"Siz '{topic.name}' mavzusini kuzatyapsiz."},
@@ -181,7 +181,10 @@ class TopicFollowView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        follow: TopicFollow = TopicFollow.objects.filter(user=request.user, topic=topic).first()
+        user:CustomUser = request.user
+
+        follow: TopicFollow = TopicFollow.objects.filter(user=user, topic=topic).first()
+
         if not follow:
             return Response(
                 data={"detail": f"Siz '{topic.name}' mavzusini kuzatmaysiz."},
@@ -196,7 +199,7 @@ class TopicFollowView(APIView):
 class CreateCommentsView(APIView):
     serializer_class: Type[CommentSerializer] = CommentSerializer
     queryset: QuerySet[Comment] = Comment.objects.all()
-    permission_classes: list[Type[IsAuthenticated]] = [IsAuthenticated]
+    permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
@@ -227,17 +230,15 @@ class CreateCommentsView(APIView):
 class CommentsView(viewsets.ModelViewSet):
     serializer_class: Type[CommentSerializer] = CommentSerializer
     queryset: QuerySet[Comment] = Comment.objects.all()
-    permission_classes: list[Type[IsAuthenticated]] = [IsAuthenticated]
+    permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def partial_update(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        if not request.user.is_authenticated:
-            return Response(data={'detail': 'Authentication credentials were not provided.'},
-                            status=status.HTTP_401_UNAUTHORIZED)
+        user: CustomUser = request.user
 
         comment: Comment = get_object_or_404(Comment, pk=pk)
 
-        if request.user != comment.user:
+        if user != comment.user:
             return Response(data={'detail': 'You do not have permission to perform this action.'},
                             status=status.HTTP_403_FORBIDDEN)
 
@@ -252,11 +253,9 @@ class CommentsView(viewsets.ModelViewSet):
     def destroy(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         comment: Comment = get_object_or_404(Comment, pk=pk)
 
-        if not request.user.is_authenticated:
-            return Response(data={'detail': 'Authentication credentials were not provided.'},
-                            status=status.HTTP_401_UNAUTHORIZED)
+        user: CustomUser = request.user
 
-        if request.user != comment.user:
+        if user != comment.user:
             return Response(data={'detail': 'You do not have permission to perform this action.'},
                             status=status.HTTP_403_FORBIDDEN)
 
@@ -304,19 +303,19 @@ class ArticleDetailCommentsView(ListAPIView):
 
 class FavoriteArticleView(APIView):
     queryset: QuerySet[Favorite] = Favorite.objects.all()
+    permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        if not request.user.is_authenticated:
-            return Response(data={'detail': 'Authentication credentials were not provided.'},
-                            status=status.HTTP_401_UNAUTHORIZED)
-
         article: Article = Article.objects.filter(pk=pk, status="publish").first()
 
         if article is not None:
-            favorite: Favorite | None = Favorite.objects.filter(user=request.user, article=article).first()
+            user: CustomUser = request.user
+
+            favorite: Favorite | None = Favorite.objects.filter(user=user, article=article).first()
 
             if favorite is None:
-                Favorite.objects.create(user=request.user, article=article)
+                Favorite.objects.create(user=user, article=article)
 
                 return Response(data={
                     "detail": "Maqola sevimlilarga qo'shildi."
@@ -331,14 +330,12 @@ class FavoriteArticleView(APIView):
         }, status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        if not request.user.is_authenticated:
-            return Response(data={'detail': 'Authentication credentials were not provided.'},
-                            status=status.HTTP_401_UNAUTHORIZED)
-
         article: Article = Article.objects.filter(pk=pk, status="publish").first()
 
         if article is not None:
-            favorite: Favorite | None = Favorite.objects.filter(user=request.user, article=article).first()
+            user: CustomUser = request.user
+
+            favorite: Favorite | None = Favorite.objects.filter(user=user, article=article).first()
 
             if favorite is not None:
                 favorite.delete()
@@ -354,12 +351,11 @@ class FavoriteArticleView(APIView):
 
 
 class ClapView(APIView):
-    def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        user: CustomUser | AnonymousUser = request.user
+    permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
-        if not user.is_authenticated:
-            return Response(data={'detail': 'Authentication credentials were not provided.'},
-                            status=status.HTTP_401_UNAUTHORIZED)
+    def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        user: CustomUser = request.user
 
         article: Article = get_object_or_404(Article, pk=pk)
 
@@ -389,11 +385,7 @@ class ClapView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        user: CustomUser | AnonymousUser = request.user
-
-        if not user.is_authenticated:
-            return Response(data={'detail': 'Authentication credentials were not provided.'},
-                            status=status.HTTP_401_UNAUTHORIZED)
+        user: CustomUser = request.user
 
         article: Article = get_object_or_404(Article, pk=pk)
 
@@ -405,6 +397,3 @@ class ClapView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(data={"detail": "Clap Not found."}, status=status.HTTP_404_NOT_FOUND)
-
-
-

@@ -3,6 +3,7 @@ from typing import Type, Any
 
 from django.contrib.auth import authenticate, get_user_model, update_session_auth_hash
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import AnonymousUser
 from django.db.models import Max, QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -17,8 +18,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from articles.models import Article
+from .authentications import CustomJWTAuthentication
 from .errors import ACTIVE_USER_NOT_FOUND_ERROR_MSG
-from .models import CustomUser, Recommendation
+from .models import CustomUser, Recommendation, Follow
 from .serializers import (
     UserSerializer,
     LoginSerializer,
@@ -362,3 +364,51 @@ class PopularAuthorsView(ListAPIView):
         queryset: QuerySet[CustomUser] = CustomUser.objects.filter(id__in=top_author_ids)
 
         return queryset
+
+
+class AuthorFollowView(APIView):
+    def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        user: CustomUser | AnonymousUser = request.user
+
+        if not user.is_authenticated:
+            return Response(data={'detail': 'Authentication credentials were not provided.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        author: CustomUser = get_object_or_404(CustomUser, pk=pk)
+
+        if Follow.objects.filter(author=author, user=user).exists():
+            return Response(data={
+                "detail": "Siz allaqachon ushbu foydalanuvchini kuzatyapsiz."
+            }, status=status.HTTP_200_OK)
+
+        Follow.objects.create(author=author, user=user)
+
+        return Response(data={
+            "detail": "Mofaqqiyatli follow qilindi."
+        }, status=status.HTTP_201_CREATED)
+
+    def delete(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        user: CustomUser | AnonymousUser = request.user
+
+        if not user.is_authenticated:
+            return Response(data={'detail': 'Authentication credentials were not provided.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        author: CustomUser = get_object_or_404(CustomUser, pk=pk)
+
+        follow: Follow = get_object_or_404(Follow, author=author, user=user)
+
+        follow.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FollowersListView(ListAPIView):
+    serializer_class: Type[UserSerializer] = UserSerializer
+    # authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+    # permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
+
+    def get_queryset(self) -> QuerySet[CustomUser]:
+        # author: CustomUser = self.request.user
+
+        return CustomUser.objects.filter(followings__author__id=1)

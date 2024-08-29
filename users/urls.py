@@ -13,5 +13,7 @@ urlpatterns: list = [
          name="forgot-verify"),
     path('password/reset/', views.ResetPasswordView.as_view(), name='reset-password'),
     path('recommend/', views.RecommendationView.as_view(), name='recommendation'),
-    path('articles/popular/', views.PopularAuthorsView.as_view(), name='users-top-authors')
+    path('articles/popular/', views.PopularAuthorsView.as_view(), name='users-top-authors'),
+    path('<int:pk>/follow/', views.AuthorFollowView.as_view(), name='users-follow-unfollow-authors'),
+    path('followers/', views.FollowersListView.as_view(), name='users-followers')
 ]

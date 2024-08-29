@@ -103,3 +103,17 @@ class ReadingHistory(models.Model):
     article: models.ForeignKey = models.ForeignKey(to="articles.Article", related_name="readers",
                                                    on_delete=models.CASCADE)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+
+
+class Follow(models.Model):
+    db_table: str = "follow"
+    verbose_name: str = "Author Follow"
+    verbose_name_plural: str = "Author Follows"
+    ordering: list[str] = ["-created_at"]
+    constraints: list[models.UniqueConstraint] = [
+        models.UniqueConstraint(fields=["user", "author"], name="unique_author_follow")
+    ]
+
+    user: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followings", on_delete=models.CASCADE)
+    author: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followers", on_delete=models.CASCADE)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
