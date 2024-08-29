@@ -3,7 +3,6 @@ from typing import Type, Any
 
 from django.contrib.auth import authenticate, get_user_model, update_session_auth_hash
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import AnonymousUser
 from django.db.models import Max, QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -52,7 +51,7 @@ User = get_user_model()
 )
 class SignupView(APIView):
     serializer_class = UserSerializer
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = permissions.AllowAny,
 
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -367,12 +366,11 @@ class PopularAuthorsView(ListAPIView):
 
 
 class AuthorFollowView(APIView):
-    def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        user: CustomUser | AnonymousUser = request.user
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+    permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
 
-        if not user.is_authenticated:
-            return Response(data={'detail': 'Authentication credentials were not provided.'},
-                            status=status.HTTP_401_UNAUTHORIZED)
+    def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        user: CustomUser = request.user
 
         author: CustomUser = get_object_or_404(CustomUser, pk=pk)
 
@@ -388,11 +386,7 @@ class AuthorFollowView(APIView):
         }, status=status.HTTP_201_CREATED)
 
     def delete(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        user: CustomUser | AnonymousUser = request.user
-
-        if not user.is_authenticated:
-            return Response(data={'detail': 'Authentication credentials were not provided.'},
-                            status=status.HTTP_401_UNAUTHORIZED)
+        user: CustomUser = request.user
 
         author: CustomUser = get_object_or_404(CustomUser, pk=pk)
 
