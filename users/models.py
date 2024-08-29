@@ -88,3 +88,18 @@ class Recommendation(models.Model):
     topic: models.OneToOneField = models.OneToOneField(to='articles.Topic', on_delete=models.CASCADE)
     recommendation_type: models.CharField = models.CharField(max_length=4, choices=RECOMMENDATION_TYPE_CHOICES)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+
+
+class ReadingHistory(models.Model):
+    db_table: str = "reading_history"
+    verbose_name: str = "Reading History"
+    verbose_name_plural: str = "Reading Histories"
+    ordering: list[str] = ["-created_at"]
+    constraints: list[models.UniqueConstraint] = [
+        models.UniqueConstraint(fields=["user", "article"], name="unique_reading_history")
+    ]
+
+    user: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="reading_history", on_delete=models.CASCADE)
+    article: models.ForeignKey = models.ForeignKey(to="articles.Article", related_name="readers",
+                                                   on_delete=models.CASCADE)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)

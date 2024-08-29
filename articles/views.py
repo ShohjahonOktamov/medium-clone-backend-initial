@@ -6,13 +6,14 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.authentications import CustomJWTAuthentication
-from users.models import CustomUser
+from users.models import CustomUser, ReadingHistory
 from users.serializers import UserSerializer
 from .filters import ArticleFilter
 from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap
@@ -70,12 +71,12 @@ from .serializers import (
     )
 )
 class ArticlesView(viewsets.ModelViewSet):
-    queryset: QuerySet = Article.objects.exclude(status="trash")
+    queryset: QuerySet[Article] = Article.objects.exclude(status="trash")
     filterset_class: Type[ArticleFilter] = ArticleFilter
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def get_permissions(self) -> list:
-        if self.request.method in ('DELETE', 'POST'):
+        if self.action in ('destroy', 'create', 'retrieve'):
             self.permission_classes = [IsAuthenticated]
         else:
             self.permission_classes = [AllowAny]
@@ -117,6 +118,31 @@ class ArticlesView(viewsets.ModelViewSet):
         article.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def retrieve(self, request: HttpRequest, pk: int, *args, **kwargs):
+        article: Article = get_object_or_404(klass=Article, pk=pk)
+
+        user: CustomUser = request.user
+
+        if not ReadingHistory.objects.filter(user=user, article=article).exists():
+            ReadingHistory.objects.create(user=user, article=article)
+
+            article.views_count += 1
+            article.save()
+
+        return super().retrieve(request=request, *args, **kwargs)
+
+    @action(methods=["POST"], detail=True, description="Increments article reads count", url_path="read",
+            url_name="article-read")
+    def read(self, request: HttpRequest, pk: int, *args, **kwargs):
+        article: Article = get_object_or_404(klass=Article, pk=pk)
+
+        article.reads_count += 1
+        article.save()
+
+        return Response(data={
+            "detail": "Maqolani o'qish soni ortdi."
+        }, status=status.HTTP_200_OK)
 
 
 class TopicFollowView(APIView):

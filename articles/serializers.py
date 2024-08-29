@@ -38,11 +38,22 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 class ArticleListSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Article] = Article
-        fields: str = "__all__"
+        fields: list[str] = ["id", "author", "title", "summary", "content", "status", "thumbnail", "views_count",
+                             "reads_count", "topics",
+                             "created_at", "updated_at", "claps_count", "comments_count"]
 
     author: UserSerializer = UserSerializer()
     topics: TopicSerializer = TopicSerializer(many=True)
-    claps: ClapSerializer = ClapSerializer(many=True)
+    claps_count: serializers.SerializerMethodField = serializers.SerializerMethodField(
+        method_name="get_article_claps_count")
+    comments_count: serializers.SerializerMethodField = serializers.SerializerMethodField(
+        method_name="get_article_comments_count")
+
+    def get_article_claps_count(self, article: Article) -> int:
+        return Clap.objects.filter(article=article).count()
+
+    def get_article_comments_count(self, article: Article) -> int:
+        return Comment.objects.filter(article=article).count()
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -79,8 +90,17 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
         model: Type[Article] = Article
         fields: list[str] = ["id", "author", "title", "summary", "content", "status", "thumbnail", "views_count",
                              "reads_count", "topics",
-                             "created_at", "updated_at", "claps", "comments"]
+                             "created_at", "updated_at", "claps_count", "comments_count"]
 
     author: UserSerializer = UserSerializer()
     topics: TopicSerializer = TopicSerializer(many=True)
-    claps: ClapSerializer = ClapSerializer(many=True)
+    claps_count: serializers.SerializerMethodField = serializers.SerializerMethodField(
+        method_name="get_article_claps_count")
+    comments_count: serializers.SerializerMethodField = serializers.SerializerMethodField(
+        method_name="get_article_comments_count")
+
+    def get_article_claps_count(self, article: Article) -> int:
+        return Clap.objects.filter(article=article).count()
+
+    def get_article_comments_count(self, article: Article) -> int:
+        return Comment.objects.filter(article=article).count()

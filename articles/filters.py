@@ -40,7 +40,7 @@ class ArticleFilter(FilterSet):
 
     is_user_favorites: BooleanFilter = BooleanFilter(method='get_user_favorites')
 
-    def get_user_favorites(self, queryset: QuerySet[Article], name: str, is_user_favorites: str) -> QuerySet[Article]:
+    def get_user_favorites(self, queryset: QuerySet[Article], name: str, is_user_favorites: bool) -> QuerySet[Article]:
         user: CustomUser = self.request.user
 
         if is_user_favorites:
@@ -49,3 +49,14 @@ class ArticleFilter(FilterSet):
 
         queryset: QuerySet[Article] = queryset.exclude(author__favorites__user=user).distinct()
         return queryset
+
+    is_reading_history: BooleanFilter = BooleanFilter(method="get_user_reading_history")
+
+    def get_user_reading_history(self, queryset: QuerySet[Article], name: str, is_reading_history: bool) -> QuerySet[
+        Article]:
+        user: CustomUser = self.request.user
+
+        if is_reading_history:
+            return queryset.filter(readers__user=user)
+
+        return queryset.exclude(readers__user=user)
