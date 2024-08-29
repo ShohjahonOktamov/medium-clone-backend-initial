@@ -405,10 +405,10 @@ class AuthorFollowView(APIView):
 
 class FollowersListView(ListAPIView):
     serializer_class: Type[UserSerializer] = UserSerializer
-    # authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
-    # permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+    permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
 
     def get_queryset(self) -> QuerySet[CustomUser]:
-        # author: CustomUser = self.request.user
+        author: CustomUser = self.request.user
 
-        return CustomUser.objects.filter(followings__author__id=1)
+        return CustomUser.objects.filter(followings__author=author)
