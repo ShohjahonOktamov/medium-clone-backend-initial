@@ -434,12 +434,11 @@ class UserNotificationView(ListAPIView, RetrieveAPIView):
     permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
 
     def get_queryset(self) -> QuerySet[Notification]:
-        queryset: QuerySet[Notification] = Notification.objects.filter(read=False)
+        queryset: QuerySet[Notification] = Notification.objects.all()
 
-        if self.action == "list":
+        if self.request.method == "GET" and not self.kwargs.get("pk"):
             user: CustomUser = self.request.user
-
-            return queryset.filter(user=user)
+            queryset :QuerySet[Notification]= queryset.filter(user=user, read=False)
 
         return queryset
 
@@ -447,7 +446,7 @@ class UserNotificationView(ListAPIView, RetrieveAPIView):
         notification: Notification = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
         notification.read = True
-        notification.read_at = timezone.now
+        notification.read_at = timezone.now()
         notification.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
