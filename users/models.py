@@ -141,6 +141,7 @@ class Notification(models.Model):
         ordering: list[str] = ["-created_at"]
 
     user: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="notifications", on_delete=models.CASCADE)
+    message: models.TextField = models.TextField()
     read: models.BooleanField = models.BooleanField(default=False)
     read_at: models.DateTimeField = models.DateTimeField(null=True)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)

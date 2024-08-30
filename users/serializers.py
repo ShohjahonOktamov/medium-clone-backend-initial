@@ -156,4 +156,4 @@ class PinSerializer(serializers.ModelSerializer):
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Notification] = Notification
-        fields: tuple[str] = "user",
+        fields: tuple[str] = "message", "read_at", "created_at"

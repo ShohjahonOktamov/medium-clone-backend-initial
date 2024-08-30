@@ -6,6 +6,7 @@ from django.contrib.auth.hashers import make_password
 from django.db.models import Max, QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django_redis import get_redis_connection
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, permissions, generics, parsers, exceptions
@@ -387,6 +388,8 @@ class AuthorFollowView(APIView):
 
         Follow.objects.create(followee=author, follower=user)
 
+        Notification.objects.create(user=author, message=f"{user.username} sizga follow qildi.")
+
         return Response(data={
             "detail": "Mofaqqiyatli follow qilindi."
         }, status=status.HTTP_201_CREATED)
@@ -444,6 +447,7 @@ class UserNotificationView(ListAPIView, RetrieveAPIView):
         notification: Notification = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
         notification.read = True
+        notification.read_at = timezone.now
         notification.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
