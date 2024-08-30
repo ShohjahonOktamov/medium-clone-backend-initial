@@ -145,6 +145,6 @@ class FAQ(Model):
         verbose_name_plural: str = 'FAQs'
         ordering: list[str] = ["-created_at"]
 
-    question: TextField = TextField()
-    answer: RichTextField = RichTextField()
+    question: TextField = TextField(null=True, blank=True)
+    answer: RichTextField = RichTextField(null=True, blank=True)
     created_at: DateTimeField = DateTimeField(auto_now_add=True)
