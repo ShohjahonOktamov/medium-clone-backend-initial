@@ -70,12 +70,11 @@ from .serializers import (
     )
 )
 class ArticlesView(viewsets.ModelViewSet):
-    queryset: QuerySet[Article] = Article.objects.exclude(status__in=("trash", "archive"))
     filterset_class: Type[ArticleFilter] = ArticleFilter
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def get_permissions(self) -> list:
-        if self.action in ('destroy', 'create', 'retrieve', 'archive', 'archive', 'pin', 'unpin'):
+        if self.action in ('destroy', 'create', 'retrieve', 'archive', 'archive', 'pin'):
             self.permission_classes = [IsAuthenticated]
         else:
             self.permission_classes = [AllowAny]
@@ -187,6 +186,11 @@ class ArticlesView(viewsets.ModelViewSet):
         pin.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get_queryset(self) -> QuerySet[Article]:
+        if self.action in ('retrieve', 'list', 'destroy', 'create'):
+            return Article.objects.exclude(status__in=("trash", "archive"))
+        return Article.objects.filter(status="publish")
 
 
 class TopicFollowView(APIView):
