@@ -3,9 +3,8 @@ from typing import Type
 from django.db.models import QuerySet
 from rest_framework import serializers
 
-from users.models import Pin
 from users.serializers import UserSerializer
-from .models import Article, Topic, Clap, Comment
+from .models import Article, Topic, Clap, Comment, FAQ
 
 
 class TopicSerializer(serializers.ModelSerializer):
@@ -107,4 +106,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
         return Comment.objects.filter(article=article).count()
 
 
-
+class FAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        models: Type[FAQ] = FAQ
+        fields: tuple[str] = "id", "question", "answer"

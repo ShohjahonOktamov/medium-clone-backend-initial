@@ -15,14 +15,15 @@ from users.authentications import CustomJWTAuthentication
 from users.models import CustomUser, ReadingHistory, Pin
 from users.serializers import UserSerializer, PinSerializer
 from .filters import ArticleFilter
-from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap, Report
+from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap, Report, FAQ
 from .serializers import (
     ArticleCreateSerializer,
     ArticleDetailSerializer,
     ArticleListSerializer,
     CommentSerializer,
     ArticleDetailCommentsSerializer,
-    ClapSerializer
+    ClapSerializer,
+    FAQSerializer
 )
 
 
@@ -486,3 +487,10 @@ class ReportArticleView(APIView):
 
         return Response(data={"detail": "Shikoyat yuborildi."},
                         status=status.HTTP_201_CREATED)
+
+
+class FAQListView(ListAPIView):
+    serializer_class: Type[FAQSerializer] = FAQSerializer
+    queryset: QuerySet[FAQ] = FAQ.objects.all()
+    permission_classes: tuple[Type[AllowAny]] = AllowAny,
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,

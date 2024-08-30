@@ -136,3 +136,15 @@ class Report(Model):
     user: ForeignKey = ForeignKey(to="users.CustomUser", related_name="reports", on_delete=CASCADE)
     article: ForeignKey = ForeignKey(to=Article, related_name="reported_by", on_delete=CASCADE)
     created_at: DateTimeField = DateTimeField(auto_now_add=True)
+
+
+class FAQ(Model):
+    class Meta:
+        db_table: str = "faq"
+        verbose_name: str = 'FAQ'
+        verbose_name_plural: str = 'FAQs'
+        ordering: list[str] = ["-created_at"]
+
+    question: TextField = TextField()
+    answer: RichTextField = RichTextField()
+    created_at: DateTimeField = DateTimeField(auto_now_add=True)
