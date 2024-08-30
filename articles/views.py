@@ -152,7 +152,7 @@ class ArticlesView(viewsets.ModelViewSet):
         article.reads_count += 1
 
         return Response(data={
-            "detail": "Maqolani o'qish soni ortdi."
+            "detail": "Maqolani arxivlandi."
         }, status=status.HTTP_200_OK)
 
     @action(methods=["POST"], detail=True, description="Pins article", url_path="pin",
