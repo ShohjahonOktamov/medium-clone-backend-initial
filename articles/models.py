@@ -22,10 +22,11 @@ class Topic(Model):
 
 
 class Article(Model):
-    STATUS_CHOICES: list[tuple[str, str], tuple[str, str], tuple[str, str]] = [
+    STATUS_CHOICES: list[tuple[str, str]] = [
         ("pending", "Pending"),
         ("publish", "Publish"),
-        ("trash", "Deleted")
+        ("trash", "Deleted"),
+        ("archive", "Archived")
     ]
 
     class Meta:

@@ -1,6 +1,6 @@
 from typing import Type
 
-from django.db.models import QuerySet, Q
+from django.db.models import QuerySet, Q, Case, When, Value, BooleanField
 from django_filters import FilterSet, NumberFilter, BooleanFilter, CharFilter
 
 from users.models import CustomUser
@@ -60,3 +60,20 @@ class ArticleFilter(FilterSet):
             return queryset.filter(readers__user=user)
 
         return queryset.exclude(readers__user=user)
+
+    is_author_articles: BooleanFilter = BooleanFilter(method="get_author_articles")
+
+    def get_author_articles(self, queryset: QuerySet[Article], name: str, is_author_articles: bool) -> QuerySet[
+        Article]:
+        author: CustomUser = self.request.user
+
+        if is_author_articles:
+            queryset: QuerySet[Article] = queryset.filter(author=author).annotate(
+                is_pinned=Case(
+                    When(pins__isnull=False, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                )
+            ).order_by('-is_pinned')
+
+            return queryset

@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.authentications import CustomJWTAuthentication
-from users.models import CustomUser, ReadingHistory
+from users.models import CustomUser, ReadingHistory, Pin
 from users.serializers import UserSerializer
 from .filters import ArticleFilter
 from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap
@@ -70,12 +70,12 @@ from .serializers import (
     )
 )
 class ArticlesView(viewsets.ModelViewSet):
-    queryset: QuerySet[Article] = Article.objects.exclude(status="trash")
+    queryset: QuerySet[Article] = Article.objects.exclude(status__in=("trash", "archive"))
     filterset_class: Type[ArticleFilter] = ArticleFilter
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def get_permissions(self) -> list:
-        if self.action in ('destroy', 'create', 'retrieve'):
+        if self.action in ('destroy', 'create', 'retrieve', 'archive'):
             self.permission_classes = [IsAuthenticated]
         else:
             self.permission_classes = [AllowAny]
@@ -103,7 +103,7 @@ class ArticlesView(viewsets.ModelViewSet):
 
     def destroy(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
 
-        article: Article | None = get_object_or_404(Article, pk=pk)
+        article: Article | None = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
         if not request.user.is_authenticated:
             return Response(data={'detail': 'Authentication credentials were not provided.'},
@@ -119,7 +119,7 @@ class ArticlesView(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def retrieve(self, request: HttpRequest, pk: int, *args, **kwargs):
-        article: Article = get_object_or_404(klass=Article, pk=pk)
+        article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
         user: CustomUser = request.user
 
@@ -134,14 +134,54 @@ class ArticlesView(viewsets.ModelViewSet):
     @action(methods=["POST"], detail=True, description="Increments article reads count", url_path="read",
             url_name="article-read")
     def read(self, request: HttpRequest, pk: int, *args, **kwargs):
-        article: Article = get_object_or_404(klass=Article, pk=pk)
+        article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
+
+        article.status = "archive"
+        article.save()
+
+        return Response(data={
+            "detail": "Maqola arxivlandi."
+        }
+            , status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=True, description="Archives article", url_path="archive",
+            url_name="article-archive")
+    def archive(self, request: HttpRequest, pk: int, *args, **kwargs):
+        article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
         article.reads_count += 1
-        article.save()
 
         return Response(data={
             "detail": "Maqolani o'qish soni ortdi."
         }, status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=True, description="Pins article", url_path="pin",
+            url_name="article-pin")
+    def pin(self, request: HttpRequest, pk: int, *args, **kwargs):
+        article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
+
+        if Pin.objects.filter(article=article).exists():
+            return Response(data={"detail": "Maqola allaqachon pin qilingan."}, status=status.HTTP_400_BAD_REQUEST)
+
+        Pin.objects.create(article=article)
+
+        return Response(data={
+            "detail": "Maqola pin qilindi."
+        }, status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=True, description="Unpins article", url_path="unpin",
+            url_name="article-unpin")
+    def pin(self, request: HttpRequest, pk: int, *args, **kwargs):
+        article: Article = self.get_queryset().filter(pk=pk).first()
+
+        if article is None:
+            return Response(data={"detail": "Maqola topilmadi.."}, status=status.HTTP_404_NOT_FOUND)
+
+        pin: Pin = get_object_or_404(klass=Pin, article=article)
+
+        pin.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TopicFollowView(APIView):
@@ -157,7 +197,7 @@ class TopicFollowView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        user:CustomUser = request.user
+        user: CustomUser = request.user
 
         if TopicFollow.objects.filter(user=user, topic=topic).exists():
             return Response(
@@ -181,7 +221,7 @@ class TopicFollowView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        user:CustomUser = request.user
+        user: CustomUser = request.user
 
         follow: TopicFollow = TopicFollow.objects.filter(user=user, topic=topic).first()
 
@@ -203,7 +243,7 @@ class CreateCommentsView(APIView):
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
-        article: Article = get_object_or_404(Article, pk=pk)
+        article: Article = get_object_or_404(klass=self.get_articles_queryset(), pk=pk)
 
         if article.status != 'publish':
             return Response(data={"detail": "Article is deleted and cannot accept comments"},
@@ -226,6 +266,9 @@ class CreateCommentsView(APIView):
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def get_articles_queryset(self) -> QuerySet[Article]:
+        return Article.objects.filter(status="publish")
+
 
 class CommentsView(viewsets.ModelViewSet):
     serializer_class: Type[CommentSerializer] = CommentSerializer
@@ -244,7 +287,7 @@ class CommentsView(viewsets.ModelViewSet):
 
         response: Response = super().partial_update(request, *args, **kwargs)
 
-        article: Article = self.get_object()
+        article: Article = comment.article
 
         detail_serializer: ArticleDetailCommentsSerializer = ArticleDetailCommentsSerializer(article)
 
@@ -357,7 +400,7 @@ class ClapView(APIView):
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         user: CustomUser = request.user
 
-        article: Article = get_object_or_404(Article, pk=pk)
+        article: Article = get_object_or_404(self.get_articles_queryset(), pk=pk)
 
         clap: Clap = Clap.objects.get_or_create(user=user, article=article)[0]
 
@@ -387,7 +430,7 @@ class ClapView(APIView):
     def delete(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         user: CustomUser = request.user
 
-        article: Article = get_object_or_404(Article, pk=pk)
+        article: Article = get_object_or_404(self.get_articles_queryset(), pk=pk)
 
         clap: Clap = Clap.objects.filter(article=article, user=user).first()
 
@@ -397,3 +440,6 @@ class ClapView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(data={"detail": "Clap Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def get_articles_queryset(self) -> QuerySet[Article]:
+        return Article.objects.filter(status="publish")

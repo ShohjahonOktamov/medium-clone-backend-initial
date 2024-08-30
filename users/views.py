@@ -330,10 +330,10 @@ class RecommendationView(APIView):
             return Response(data={'error': 'One of more_article_id or less_article_id must be provided.'},
                             status=status.HTTP_400_BAD_REQUEST)
         if more_article_id:
-            article: Article | None = get_object_or_404(Article, id=more_article_id)
+            article: Article | None = get_object_or_404(klass=self.get_articles_queryset(), id=more_article_id)
             recommendation_type: str = 'more'
         elif less_article_id:
-            article: None | Article = get_object_or_404(Article, id=less_article_id)
+            article: None | Article = get_object_or_404(klass=self.get_articles_queryset(), id=less_article_id)
             recommendation_type: str = 'less'
 
         for topic in article.topics.all():
@@ -347,12 +347,17 @@ class RecommendationView(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    def get_articles_queryset(self) -> QuerySet[Article]:
+        return Article.objects.filter(status="publish")
+
 
 class PopularAuthorsView(ListAPIView):
     serializer_class: Type[UserSerializer] = UserSerializer
 
     def get_queryset(self) -> QuerySet[CustomUser]:
-        authors_with_best_articles: QuerySet[dict[str, Any]] = Article.objects.values('author__id').annotate(
+        articles = Article.objects.exclude(status__in=("trash", "archive"))
+
+        authors_with_best_articles: QuerySet[dict[str, Any]] = articles.values('author__id').annotate(
             max_reads=Max('reads_count')
         )
 

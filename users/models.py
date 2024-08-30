@@ -111,9 +111,20 @@ class Follow(models.Model):
     verbose_name_plural: str = "Author Follows"
     ordering: list[str] = ["-created_at"]
     constraints: list[models.UniqueConstraint] = [
-        models.UniqueConstraint(fields=["user", "author"], name="unique_author_follow")
+        models.UniqueConstraint(fields=["follower", "followee"], name="unique_author_follow")
     ]
 
     follower: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followings", on_delete=models.CASCADE)
     followee: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followers", on_delete=models.CASCADE)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+
+
+class Pin(models.Model):
+    db_table: str = "pin"
+    verbose_name: str = "Pin"
+    verbose_name_plural: str = "Pins"
+    ordering: list[str] = ["-created_at"]
+
+    article: models.OneToOneField = models.OneToOneField(to="articles.Article", related_name="pins",
+                                                         on_delete=models.CASCADE)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
