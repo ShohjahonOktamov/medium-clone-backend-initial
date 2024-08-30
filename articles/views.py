@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 
 from users.authentications import CustomJWTAuthentication
 from users.models import CustomUser, ReadingHistory, Pin
-from users.serializers import UserSerializer
+from users.serializers import UserSerializer, PinSerializer
 from .filters import ArticleFilter
 from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap
 from .serializers import (
@@ -75,21 +75,25 @@ class ArticlesView(viewsets.ModelViewSet):
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def get_permissions(self) -> list:
-        if self.action in ('destroy', 'create', 'retrieve', 'archive'):
+        if self.action in ('destroy', 'create', 'retrieve', 'archive', 'archive', 'pin', 'unpin'):
             self.permission_classes = [IsAuthenticated]
         else:
             self.permission_classes = [AllowAny]
         return super().get_permissions()
 
     def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
-        ArticleListSerializer]:
+        ArticleListSerializer] | Type[PinSerializer]:
         if self.action in ('create', 'partial_update', 'update'):
             return ArticleCreateSerializer
 
         if self.action == 'list':
             return ArticleListSerializer
 
-        return ArticleDetailSerializer
+        if self.action == 'retrieve':
+            return ArticleDetailSerializer
+
+        if self.action in ('pin', 'unpin'):
+            return PinSerializer
 
     def create(self, request: HttpRequest, *args, **kwargs) -> Response:
         create_serializer: ArticleCreateSerializer = self.get_serializer(data={**request.data, "author": request.user})
@@ -136,20 +140,21 @@ class ArticlesView(viewsets.ModelViewSet):
     def read(self, request: HttpRequest, pk: int, *args, **kwargs):
         article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
-        article.status = "archive"
+        article.reads_count += 1
         article.save()
 
         return Response(data={
-            "detail": "Maqola arxivlandi."
+            "detail": "Maqolani o'qish soni ortdi."
         }
-            , status=status.HTTP_200_OK)
+            , status=status.HTTP_201_CREATED)
 
     @action(methods=["POST"], detail=True, description="Archives article", url_path="archive",
             url_name="article-archive")
     def archive(self, request: HttpRequest, pk: int, *args, **kwargs):
         article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
-        article.reads_count += 1
+        article.status = "archive"
+        article.save()
 
         return Response(data={
             "detail": "Maqola arxivlandi."
@@ -171,7 +176,7 @@ class ArticlesView(viewsets.ModelViewSet):
 
     @action(methods=["POST"], detail=True, description="Unpins article", url_path="unpin",
             url_name="article-unpin")
-    def pin(self, request: HttpRequest, pk: int, *args, **kwargs):
+    def unpin(self, request: HttpRequest, pk: int, *args, **kwargs):
         article: Article = self.get_queryset().filter(pk=pk).first()
 
         if article is None:

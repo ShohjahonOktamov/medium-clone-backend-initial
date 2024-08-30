@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from users.errors import BIRTH_YEAR_ERROR_MSG
-from .models import Recommendation
+from .models import Recommendation, Pin
 
 User = get_user_model()
 
@@ -145,3 +145,9 @@ class RecommendationSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Recommendation] = Recommendation
         fields: tuple[str, str, str] = ('topic', 'recommendation_type')
+
+
+class PinSerializer(serializers.ModelSerializer):
+    class Meta:
+        model: Type[Pin] = Pin
+        fields: tuple = tuple()
