@@ -470,8 +470,10 @@ class ReportArticleView(APIView):
         user: CustomUser = request.user
 
         if Report.objects.filter(article=article, user=user).exists():
-            return Response(data={"detail": "Ushbu maqola allaqachon shikoyat qilingan."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(data=[
+                "Ushbu maqola allaqachon shikoyat qilingan."
+            ],
+                status=status.HTTP_400_BAD_REQUEST)
 
         Report.objects.create(article=article, user=user)
 
@@ -479,7 +481,9 @@ class ReportArticleView(APIView):
             article.status = "trash"
             article.save()
 
-            return Response(data={"detail": "Maqola bir nechta shikoyatlar tufayli olib tashlandi."},
+            return Response(data=[
+                "Maqola bir nechta shikoyatlar tufayli olib tashlandi."
+            ],
                             status=status.HTTP_200_OK)
 
         return Response(data={"detail": "Shikoyat yuborildi."},
