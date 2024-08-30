@@ -108,5 +108,5 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
 
 class FAQSerializer(serializers.ModelSerializer):
     class Meta:
-        models: Type[FAQ] = FAQ
+        model: Type[FAQ] = FAQ
         fields: tuple[str] = "id", "question", "answer"
