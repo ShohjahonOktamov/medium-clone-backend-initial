@@ -174,7 +174,7 @@ class ArticlesView(viewsets.ModelViewSet):
             "detail": "Maqola pin qilindi."
         }, status=status.HTTP_200_OK)
 
-    @action(methods=["POST"], detail=True, description="Unpins article", url_path="unpin",
+    @action(methods=["DELETE"], detail=True, description="Unpins article", url_path="unpin",
             url_name="article-unpin")
     def unpin(self, request: HttpRequest, pk: int, *args, **kwargs):
         article: Article = self.get_queryset().filter(pk=pk).first()
