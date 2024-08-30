@@ -181,7 +181,10 @@ class ArticlesView(viewsets.ModelViewSet):
         if article is None:
             return Response(data={"detail": "Maqola topilmadi.."}, status=status.HTTP_404_NOT_FOUND)
 
-        pin: Pin = get_object_or_404(klass=Pin, article=article)
+        pin: Pin = Pin.objects.filter(article=article).first()
+
+        if pin is None:
+            return Response(data={"detail": "Maqola topilmadi.."}, status=status.HTTP_404_NOT_FOUND)
 
         pin.delete()
 
