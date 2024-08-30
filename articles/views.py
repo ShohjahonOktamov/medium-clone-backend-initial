@@ -15,7 +15,7 @@ from users.authentications import CustomJWTAuthentication
 from users.models import CustomUser, ReadingHistory, Pin
 from users.serializers import UserSerializer, PinSerializer
 from .filters import ArticleFilter
-from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap
+from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap, Report
 from .serializers import (
     ArticleCreateSerializer,
     ArticleDetailSerializer,
@@ -455,3 +455,30 @@ class ClapView(APIView):
 
     def get_articles_queryset(self) -> QuerySet[Article]:
         return Article.objects.filter(status="publish")
+
+
+class ReportArticleView(APIView):
+    queryset: QuerySet[Article] = Article.objects.filter(status="publish")
+    permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+
+    def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        article = get_object_or_404(klass=self.get_queryset(), pk=pk)
+
+        user: CustomUser = request.user
+
+        if Report.objects.filter(article=article, user=user).exists():
+            return Response(data={"detail": "Ushbu maqola allaqachon shikoyat qilingan."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        Report.objects.create(article=article, user=user)
+
+        if Report.objects.filter(article=article).count() > 3:
+            article.status = "trash"
+            article.save()
+
+            return Response(data={"detail": "Maqola bir nechta shikoyatlar tufayli olib tashlandi."},
+                            status=status.HTTP_200_OK)
+
+        return Response(data={"detail": "Shikoyat yuborildi."},
+                        status=status.HTTP_201_CREATED)

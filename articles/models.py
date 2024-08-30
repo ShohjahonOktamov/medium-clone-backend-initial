@@ -121,3 +121,18 @@ class Favorite(Model):
 
     def __str__(self) -> str:
         return f"{self.user.username} favorited {self.article.name}"
+
+
+class Report(Model):
+    class Meta:
+        db_table: str = "report"
+        verbose_name: str = 'Report'
+        verbose_name_plural: str = 'Reports'
+        ordering: list[str] = ["-created_at"]
+        constraints: list[UniqueConstraint] = [
+            UniqueConstraint(fields=["user", "article"], name="unique_report")
+        ]
+
+    user: ForeignKey = ForeignKey(to="users.CustomUser", related_name="reports", on_delete=CASCADE)
+    article: ForeignKey = ForeignKey(to=Article, related_name="reported_by", on_delete=CASCADE)
+    created_at: DateTimeField = DateTimeField(auto_now_add=True)
