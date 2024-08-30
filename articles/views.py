@@ -458,9 +458,11 @@ class ClapView(APIView):
 
 
 class ReportArticleView(APIView):
-    queryset: QuerySet[Article] = Article.objects.filter(status="publish")
     permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+
+    def get_queryset(self) -> Response:
+        return Article.objects.filter(status="publish")
 
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         article = get_object_or_404(klass=self.get_queryset(), pk=pk)
