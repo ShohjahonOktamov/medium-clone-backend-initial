@@ -89,12 +89,12 @@ class Comment(Model):
 
 class TopicFollow(Model):
     class Meta:
-        db_table: str = "follow"
-        verbose_name: str = 'Follow'
-        verbose_name_plural: str = 'Follows'
+        db_table: str = "topic_follow"
+        verbose_name: str = 'Topic Follow'
+        verbose_name_plural: str = 'Topic Follows'
         ordering: list[str] = ["-created_at"]
         constraints: list[UniqueConstraint] = [
-            UniqueConstraint(fields=["user", "topic"], name="unique_follow")
+            UniqueConstraint(fields=["user", "topic"], name="unique_topic_follow")
         ]
 
     user: ForeignKey = ForeignKey(to='users.CustomUser', on_delete=CASCADE, related_name="following")

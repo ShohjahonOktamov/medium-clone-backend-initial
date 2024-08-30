@@ -91,13 +91,14 @@ class Recommendation(models.Model):
 
 
 class ReadingHistory(models.Model):
-    db_table: str = "reading_history"
-    verbose_name: str = "Reading History"
-    verbose_name_plural: str = "Reading Histories"
-    ordering: list[str] = ["-created_at"]
-    constraints: list[models.UniqueConstraint] = [
-        models.UniqueConstraint(fields=["user", "article"], name="unique_reading_history")
-    ]
+    class Meta:
+        db_table: str = "reading_history"
+        verbose_name: str = "Reading History"
+        verbose_name_plural: str = "Reading Histories"
+        ordering: list[str] = ["-created_at"]
+        constraints: list[models.UniqueConstraint] = [
+            models.UniqueConstraint(fields=["user", "article"], name="unique_reading_history")
+        ]
 
     user: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="reading_history", on_delete=models.CASCADE)
     article: models.ForeignKey = models.ForeignKey(to="articles.Article", related_name="readers",
@@ -106,13 +107,14 @@ class ReadingHistory(models.Model):
 
 
 class Follow(models.Model):
-    db_table: str = "follow"
-    verbose_name: str = "Author Follow"
-    verbose_name_plural: str = "Author Follows"
-    ordering: list[str] = ["-created_at"]
-    constraints: list[models.UniqueConstraint] = [
-        models.UniqueConstraint(fields=["follower", "followee"], name="unique_author_follow")
-    ]
+    class Meta:
+        db_table: str = "follow"
+        verbose_name: str = "Author Follow"
+        verbose_name_plural: str = "Author Follows"
+        ordering: list[str] = ["-created_at"]
+        constraints: list[models.UniqueConstraint] = [
+            models.UniqueConstraint(fields=["follower", "followee"], name="unique_author_follow")
+        ]
 
     follower: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followings", on_delete=models.CASCADE)
     followee: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="followers", on_delete=models.CASCADE)
@@ -120,11 +122,25 @@ class Follow(models.Model):
 
 
 class Pin(models.Model):
-    db_table: str = "pin"
-    verbose_name: str = "Pin"
-    verbose_name_plural: str = "Pins"
-    ordering: list[str] = ["-created_at"]
+    class Meta:
+        db_table: str = "pin"
+        verbose_name: str = "Pin"
+        verbose_name_plural: str = "Pins"
+        ordering: list[str] = ["-created_at"]
 
     article: models.OneToOneField = models.OneToOneField(to="articles.Article", related_name="pins",
                                                          on_delete=models.CASCADE)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+
+
+class Notification(models.Model):
+    class Meta:
+        db_table: str = "notification"
+        verbose_name: str = "Notification"
+        verbose_name_plural: str = "Notifications"
+        ordering: list[str] = ["-created_at"]
+
+    user: models.ForeignKey = models.ForeignKey(to=CustomUser, related_name="notifications", on_delete=models.CASCADE)
+    read: models.BooleanField = models.BooleanField(default=False)
+    read_at: models.DateTimeField = models.DateTimeField(null=True)
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)

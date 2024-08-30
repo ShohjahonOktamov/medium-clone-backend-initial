@@ -10,7 +10,7 @@ from django_redis import get_redis_connection
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, permissions, generics, parsers, exceptions
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,7 +19,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from articles.models import Article
 from .authentications import CustomJWTAuthentication
 from .errors import ACTIVE_USER_NOT_FOUND_ERROR_MSG
-from .models import CustomUser, Recommendation, Follow
+from .models import CustomUser, Recommendation, Follow, Notification
 from .serializers import (
     UserSerializer,
     LoginSerializer,
@@ -32,7 +32,8 @@ from .serializers import (
     ResetPasswordResponseSerializer,
     ForgotPasswordVerifyResponseSerializer,
     ForgotPasswordResponseSerializer,
-    RecommendationSerializer
+    RecommendationSerializer,
+    NotificationSerializer
 )
 from .services import UserService, SendEmailService, OTPService
 
@@ -422,3 +423,27 @@ class FollowingsListView(ListAPIView):
         user: CustomUser = self.request.user
 
         return CustomUser.objects.filter(followers__follower=user)
+
+
+class UserNotificationView(ListAPIView, RetrieveAPIView):
+    serializer_class: Type[NotificationSerializer] = NotificationSerializer
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+    permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
+
+    def get_queryset(self) -> QuerySet[Notification]:
+        queryset: QuerySet[Notification] = Notification.objects.filter(read=False)
+
+        if self.action == "list":
+            user: CustomUser = self.request.user
+
+            return queryset.filter(user=user)
+
+        return queryset
+
+    def patch(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+        notification: Notification = get_object_or_404(klass=self.get_queryset(), pk=pk)
+
+        notification.read = True
+        notification.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
