@@ -438,9 +438,14 @@ class UserNotificationView(ListAPIView, RetrieveAPIView):
 
         if self.request.method == "GET" and not self.kwargs.get("pk"):
             user: CustomUser = self.request.user
-            queryset :QuerySet[Notification]= queryset.filter(user=user, read=False)
+            queryset: QuerySet[Notification] = queryset.filter(user=user, read=False)
 
         return queryset
+
+    def retrieve(self, request: HttpRequest, *args, **kwargs) -> Response:
+        notification: Notification = get_object_or_404(self.get_queryset(), pk=kwargs['pk'])
+        serializer: NotificationSerializer = self.get_serializer(notification)
+        return Response(serializer.data)
 
     def patch(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         notification: Notification = get_object_or_404(klass=self.get_queryset(), pk=pk)
@@ -450,3 +455,9 @@ class UserNotificationView(ListAPIView, RetrieveAPIView):
         notification.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get(self, request: HttpRequest, *args, **kwargs) -> Response:
+        if 'pk' in kwargs:
+            return self.retrieve(request=request, *args, **kwargs)
+
+        return self.list(request=request, *args, **kwargs)
