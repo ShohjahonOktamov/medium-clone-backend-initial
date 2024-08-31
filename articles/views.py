@@ -146,11 +146,15 @@ class ArticlesView(viewsets.ModelViewSet):
 
     def create(self, request: HttpRequest, *args, **kwargs) -> Response:
         if type(request.data) != dict:
-            topic_ids: list[int] = list(map(int, request.data.getlist('topic_ids')))
+            try:
+                topic_ids: list[int] = list(map(int, request.data.getlist('topic_ids')))
+            except ValueError:
+                topic_ids: str = ''
+
             data = request.data.dict()
             data["topic_ids"] = topic_ids
             create_serializer: ArticleCreateSerializer = self.get_serializer(
-                data={**data, "author": request.user.id})
+                data={**data, "author": 1})
         else:
             create_serializer: ArticleCreateSerializer = self.get_serializer(
                 data={**request.data, "author": request.user})

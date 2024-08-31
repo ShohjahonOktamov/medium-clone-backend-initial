@@ -27,7 +27,10 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
     topic_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         source="topics",
-        queryset=Topic.objects.filter(is_active=True)
+        queryset=Topic.objects.filter(is_active=True),
+        required=True,
+        allow_empty=False,
+        allow_null=False
     )
 
     class Meta:
@@ -36,7 +39,6 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
         extra_kwargs: dict[str, dict[str, bool]] = {
             'author': {'write_only': True},
         }
-
 
 class ArticleListSerializer(serializers.ModelSerializer):
     class Meta:
