@@ -118,6 +118,7 @@ from .serializers import (
 )
 class ArticlesView(viewsets.ModelViewSet):
     filterset_class: Type[ArticleFilter] = ArticleFilter
+
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def get_permissions(self) -> list:
@@ -144,7 +145,15 @@ class ArticlesView(viewsets.ModelViewSet):
         return None
 
     def create(self, request: HttpRequest, *args, **kwargs) -> Response:
-        create_serializer: ArticleCreateSerializer = self.get_serializer(data={**request.data, "author": request.user})
+        if type(request.data) != dict:
+            topic_ids: list[int] = list(map(int, request.data.getlist('topic_ids')))
+            data = request.data.dict()
+            data["topic_ids"] = topic_ids
+            create_serializer: ArticleCreateSerializer = self.get_serializer(
+                data={**data, "author": request.user.id})
+        else:
+            create_serializer: ArticleCreateSerializer = self.get_serializer(
+                data={**request.data, "author": request.user})
 
         if create_serializer.is_valid():
             article: Article = create_serializer.save()

@@ -32,7 +32,10 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model: Type[Article] = Article
-        fields: tuple[str] = ("title", "summary", "content", "topic_ids")
+        fields: tuple[str] = "title", "summary", "content", "topic_ids", "author"
+        extra_kwargs: dict[str, dict[str, bool]] = {
+            'author': {'write_only': True},
+        }
 
 
 class ArticleListSerializer(serializers.ModelSerializer):
