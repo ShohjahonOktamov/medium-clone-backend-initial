@@ -80,7 +80,7 @@ from .serializers import (
         summary="Increments article reads count",
         request=None,
         responses={
-            201: article_read_response,
+            200: article_read_response,
             404: no_article_matches_response
         }
     ),
@@ -194,7 +194,7 @@ class ArticlesView(viewsets.ModelViewSet):
         return Response(data={
             "detail": "Maqolani o'qish soni ortdi."
         }
-            , status=status.HTTP_201_CREATED)
+            , status=status.HTTP_200_OK)
 
     @action(methods=["POST"], detail=True, description="Archives article", url_path="archive",
             url_name="article-archive")
@@ -429,7 +429,7 @@ class ArticleDetailCommentsView(ListAPIView):
         summary="List Comments",
         request=None,
         responses={
-            200:ArticleDetailCommentsSerializer(many=True)
+            200: ArticleDetailCommentsSerializer(many=True)
         }
     )
     def list(self, request, *args, **kwargs):
@@ -462,8 +462,6 @@ class ArticleDetailCommentsView(ListAPIView):
             ]
         }
         return Response(data)
-
-
 
 
 class FavoriteArticleView(APIView):
