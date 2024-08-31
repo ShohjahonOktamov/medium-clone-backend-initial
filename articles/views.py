@@ -366,6 +366,7 @@ class CreateCommentsView(APIView):
 class CommentsView(viewsets.ModelViewSet):
     serializer_class: Type[CommentSerializer] = CommentSerializer
     queryset: QuerySet[Comment] = Comment.objects.all()
+
     permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
@@ -390,9 +391,7 @@ class CommentsView(viewsets.ModelViewSet):
 
         response: Response = super().partial_update(request, *args, **kwargs)
 
-        article: Article = comment.article
-
-        detail_serializer: ArticleDetailCommentsSerializer = ArticleDetailCommentsSerializer(article)
+        detail_serializer: ArticleDetailCommentsSerializer = ArticleDetailCommentsSerializer(comment)
 
         return Response(detail_serializer.data, status=status.HTTP_200_OK)
 

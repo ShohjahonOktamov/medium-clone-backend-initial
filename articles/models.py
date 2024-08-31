@@ -84,7 +84,7 @@ class Comment(Model):
     parent: ForeignKey = ForeignKey(to='self', null=True, on_delete=CASCADE, related_name='replies')
 
     def __str__(self) -> str:
-        return f"{self.user.username} commented {self.article.name}"
+        return f"{self.user.username} commented {self.article.title}"
 
 
 class TopicFollow(Model):

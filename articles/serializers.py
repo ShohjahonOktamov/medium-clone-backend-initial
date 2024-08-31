@@ -59,17 +59,11 @@ class ArticleListSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Comment] = Comment
-        fields: tuple[str] = ('article', 'user', 'content', 'parent')
+        fields: tuple[str] = 'article', 'user', 'content', 'parent'
         extra_kwargs: dict[str, dict[str, bool]] = {
             'article': {'write_only': True},
             'user': {'write_only': True}
         }
-
-    # def validate(self, data: dict[str, int | str]):
-    #     article: Article | None = Article.objects.filter(pk=data['article']).first()
-    #     if not article or article.status == 'trash':
-    #         raise serializers.ValidationError("Cannot add comments to articles that are deleted.")
-    #     return data
 
 
 class ArticleDetailCommentsSerializer(serializers.ModelSerializer):
