@@ -391,6 +391,8 @@ class CommentsView(viewsets.ModelViewSet):
 
         response: Response = super().partial_update(request, *args, **kwargs)
 
+        comment: Comment = Comment.objects.get(pk=pk)
+
         detail_serializer: ArticleDetailCommentsSerializer = ArticleDetailCommentsSerializer(comment)
 
         return Response(detail_serializer.data, status=status.HTTP_200_OK)
