@@ -154,10 +154,10 @@ class ArticlesView(viewsets.ModelViewSet):
             data = request.data.dict()
             data["topic_ids"] = topic_ids
             create_serializer: ArticleCreateSerializer = self.get_serializer(
-                data={**data, "author": 1})
+                data={**data, "author": request.user.id})
         else:
             create_serializer: ArticleCreateSerializer = self.get_serializer(
-                data={**request.data, "author": request.user})
+                data={**request.data, "author": request.user.id})
 
         if create_serializer.is_valid():
             article: Article = create_serializer.save()
