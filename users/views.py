@@ -9,15 +9,16 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_redis import get_redis_connection
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import status, permissions, generics, parsers, exceptions
+from rest_framework import status, permissions, generics, parsers, exceptions, viewsets, mixins
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from articles.models import Article
+from articles.schemas import no_content_response, bad_request_response, unauthorized_response
 from .authentications import CustomJWTAuthentication
 from .errors import ACTIVE_USER_NOT_FOUND_ERROR_MSG
 from .models import CustomUser, Recommendation, Follow, Notification
@@ -38,7 +39,7 @@ from .serializers import (
 )
 from .services import UserService, SendEmailService, OTPService
 
-User = get_user_model()
+User: Type[CustomUser] = get_user_model()
 
 
 @extend_schema_view(
@@ -312,9 +313,8 @@ class ResetPasswordView(generics.UpdateAPIView):
         summary="Adjust Recommendations for an Article",
         request=RecommendationSerializer,
         responses={
-            204: None,
-            400: 'Bad Request'
-        }
+            204: no_content_response,
+            400: bad_request_response}
     )
 )
 class RecommendationView(APIView):
@@ -353,6 +353,15 @@ class RecommendationView(APIView):
         return Article.objects.filter(status="publish")
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="Popular Authors List",
+        request=None,
+        responses={
+            200: UserSerializer(many=True)
+        }
+    )
+)
 class PopularAuthorsView(ListAPIView):
     serializer_class: Type[UserSerializer] = UserSerializer
 
@@ -372,9 +381,21 @@ class PopularAuthorsView(ListAPIView):
         return queryset
 
 
+@extend_schema_view(
+    post=extend_schema(
+        summary="Follow Author",
+        request=None,
+        responses={
+            201: "Mofaqqiyatli follow qilindi.",
+            200: "Siz allaqachon ushbu foydalanuvchini kuzatyapsiz.",
+            404: "No User matches the given query.",
+            401: unauthorized_response
+        }
+    )
+)
 class AuthorFollowView(APIView):
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
-    permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
+    permission_classes: tuple[Type[permissions.IsAuthenticated]] = permissions.IsAuthenticated,
 
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         user: CustomUser = request.user
@@ -406,10 +427,20 @@ class AuthorFollowView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="User Followers",
+        request=None,
+        responses={
+            200: UserSerializer(many=True),
+            401: unauthorized_response
+        }
+    )
+)
 class FollowersListView(ListAPIView):
     serializer_class: Type[UserSerializer] = UserSerializer
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
-    permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
+    permission_classes: tuple[Type[permissions.IsAuthenticated]] = permissions.IsAuthenticated,
 
     def get_queryset(self) -> QuerySet[CustomUser]:
         author: CustomUser = self.request.user
@@ -417,6 +448,16 @@ class FollowersListView(ListAPIView):
         return CustomUser.objects.filter(followings__followee=author)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="User Followings",
+        request=None,
+        responses={
+            200: UserSerializer(many=True),
+            401: unauthorized_response
+        }
+    )
+)
 class FollowingsListView(ListAPIView):
     serializer_class: Type[UserSerializer] = UserSerializer
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
@@ -428,10 +469,32 @@ class FollowingsListView(ListAPIView):
         return CustomUser.objects.filter(followers__follower=user)
 
 
-class UserNotificationView(ListAPIView, RetrieveAPIView):
+@extend_schema_view(
+    list=extend_schema(
+        summary="User Notifications",
+        request=None,
+        responses={
+            200: NotificationSerializer(many=True),
+            401: unauthorized_response
+        }
+    ),
+    retrieve=extend_schema(
+        summary="Notifications",
+        request=None,
+        responses={
+            200: NotificationSerializer,
+            404: "No Notification matches the given query.",
+            401: unauthorized_response
+        }
+    )
+)
+class UserNotificationView(mixins.RetrieveModelMixin,
+                           mixins.ListModelMixin,
+                           mixins.UpdateModelMixin,
+                           viewsets.GenericViewSet):
     serializer_class: Type[NotificationSerializer] = NotificationSerializer
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
-    permission_classes: tuple[permissions.IsAuthenticated] = permissions.IsAuthenticated,
+    permission_classes: tuple[Type[permissions.IsAuthenticated]] = permissions.IsAuthenticated,
 
     def get_queryset(self) -> QuerySet[Notification]:
         queryset: QuerySet[Notification] = Notification.objects.all()
@@ -442,11 +505,14 @@ class UserNotificationView(ListAPIView, RetrieveAPIView):
 
         return queryset
 
-    def retrieve(self, request: HttpRequest, *args, **kwargs) -> Response:
-        notification: Notification = get_object_or_404(self.get_queryset(), pk=kwargs['pk'])
-        serializer: NotificationSerializer = self.get_serializer(notification)
-        return Response(serializer.data)
-
+    @extend_schema(
+        summary="Match Notification As Read",
+        request=None,
+        responses={
+            204: no_content_response,
+            404: "No Notification matches the given query."
+        }
+    )
     def patch(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         notification: Notification = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
@@ -455,9 +521,3 @@ class UserNotificationView(ListAPIView, RetrieveAPIView):
         notification.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def get(self, request: HttpRequest, *args, **kwargs) -> Response:
-        if 'pk' in kwargs:
-            return self.retrieve(request=request, *args, **kwargs)
-
-        return self.list(request=request, *args, **kwargs)

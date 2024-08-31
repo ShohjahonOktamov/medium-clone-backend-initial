@@ -16,6 +16,9 @@ from users.models import CustomUser, ReadingHistory, Pin
 from users.serializers import UserSerializer, PinSerializer
 from .filters import ArticleFilter
 from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap, Report, FAQ
+from .schemas import articles_list_response, unauthorized_response, article_detail_response, \
+    no_article_matches_response, bad_request_response, no_content_response, forbidden_response, article_read_response, \
+    article_archived, article_pin, article_already_pinned, article_not_found
 from .serializers import (
     ArticleCreateSerializer,
     ArticleDetailSerializer,
@@ -32,41 +35,84 @@ from .serializers import (
         summary="List Articles",
         request=None,
         responses={
-            200: ArticleListSerializer(many=True)
+            200: articles_list_response,
+            401: unauthorized_response
         }
-    )
-    ,
+    ),
     retrieve=extend_schema(
         summary="Get Article Details",
         request=None,
         responses={
-            200: ArticleDetailSerializer
+            200: article_detail_response,
+            404: no_article_matches_response,
+            401: unauthorized_response
         }
     ),
     create=extend_schema(
         summary="Create Article",
         request=ArticleCreateSerializer,
         responses={
-            201: ArticleDetailSerializer
+            201: article_detail_response,
+            400: bad_request_response,
+            401: unauthorized_response
         }
     ),
     destroy=extend_schema(
         summary="Delete Article",
         request=None,
         responses={
-            204: None,
-            403: "Forbidden",
-            404: "Article Does Not Exist"
+            204: no_content_response,
+            403: forbidden_response,
+            404: no_article_matches_response,
+            401: unauthorized_response
         }
-    )
-    ,
+    ),
     partial_update=extend_schema(
         summary="Update Article",
         request=ArticleCreateSerializer,
         responses={
-            200: ArticleDetailSerializer,
-            400: "Bad Request",
-            404: "Article Does Not Exist"
+            200: article_detail_response,
+            400: bad_request_response,
+            404: no_article_matches_response
+        }
+    ),
+    read=extend_schema(
+        summary="Increments article reads count",
+        request=None,
+        responses={
+            201: article_read_response,
+            404: no_article_matches_response
+        }
+    ),
+    archive=extend_schema(
+        summary="Archives article",
+        request=None,
+        responses={
+            200: article_archived,
+            404: no_article_matches_response,
+            403: forbidden_response,
+            401: unauthorized_response
+        }
+    ),
+    pin=extend_schema(
+        summary="Pins article",
+        request=PinSerializer,
+        responses={
+            200: article_pin,
+            404: no_article_matches_response,
+            400: article_already_pinned,
+            403: forbidden_response,
+            401: unauthorized_response
+        }
+    ),
+    unpin=extend_schema(
+        summary="Unpins article",
+        request=PinSerializer,
+        responses={
+            204: no_content_response,
+            404: article_not_found,
+            401: unauthorized_response,
+            403: forbidden_response
         }
     )
 )
@@ -75,10 +121,10 @@ class ArticlesView(viewsets.ModelViewSet):
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
     def get_permissions(self) -> list:
-        if self.action in ('destroy', 'create', 'retrieve', 'archive', 'archive', 'pin'):
-            self.permission_classes = [IsAuthenticated]
+        if self.action in ('destroy', 'create', 'retrieve', 'archive', 'pin', 'unpin'):
+            self.permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
         else:
-            self.permission_classes = [AllowAny]
+            self.permission_classes: tuple[Type[AllowAny]] = AllowAny,
         return super().get_permissions()
 
     def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
@@ -94,6 +140,8 @@ class ArticlesView(viewsets.ModelViewSet):
 
         if self.action in ('pin', 'unpin'):
             return PinSerializer
+
+        return None
 
     def create(self, request: HttpRequest, *args, **kwargs) -> Response:
         create_serializer: ArticleCreateSerializer = self.get_serializer(data={**request.data, "author": request.user})
@@ -153,6 +201,10 @@ class ArticlesView(viewsets.ModelViewSet):
     def archive(self, request: HttpRequest, pk: int, *args, **kwargs):
         article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
+        if request.user != article.author:
+            return Response(data={'detail': 'You do not have permission to perform this action.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
         article.status = "archive"
         article.save()
 
@@ -197,6 +249,25 @@ class ArticlesView(viewsets.ModelViewSet):
         return Article.objects.filter(status="publish")
 
 
+@extend_schema_view(
+    post=extend_schema(
+        summary="Topic Follow",
+        request=None,
+        responses={
+            404: "Hech qanday mavzu berilgan soʻrovga mos kelmaydi.",
+            200: "Siz allaqachon '{topic}' mavzusini kuzatyapsiz.",
+            201: "Siz '{topic}' mavzusini kuzatyapsiz."
+        }
+    ),
+    delete=extend_schema(
+        summary="Topic Unfollow",
+        request=None,
+        responses={
+            404: "Hech qanday mavzu berilgan soʻrovga mos kelmaydi./Siz '{topic}' mavzusini kuzatmaysiz.",
+            204: no_content_response
+        }
+    )
+)
 class TopicFollowView(APIView):
     permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
@@ -255,6 +326,15 @@ class CreateCommentsView(APIView):
     permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
+    @extend_schema(
+        summary="Article Comment Create",
+        request=CommentSerializer,
+        responses={
+            201: ArticleDetailCommentsSerializer,
+            404: "Article is deleted and cannot accept comments",
+            400: "Bad Request."
+        }
+    )
     def post(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         article: Article = get_object_or_404(klass=self.get_articles_queryset(), pk=pk)
 
@@ -289,6 +369,16 @@ class CommentsView(viewsets.ModelViewSet):
     permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 
+    @extend_schema(
+        summary="Update Comment",
+        request=CommentSerializer,
+        responses={
+            200: ArticleDetailCommentsSerializer,
+            401: unauthorized_response,
+            403: forbidden_response,
+            404: "No Comment matches the given query."
+        }
+    )
     def partial_update(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         user: CustomUser = request.user
 
@@ -306,6 +396,16 @@ class CommentsView(viewsets.ModelViewSet):
 
         return Response(detail_serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        summary="Delete Comment",
+        request=None,
+        responses={
+            401: unauthorized_response,
+            403: forbidden_response,
+            404: "No Comment matches the given query.",
+            204: no_content_response
+        }
+    )
     def destroy(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         comment: Comment = get_object_or_404(Comment, pk=pk)
 
@@ -325,6 +425,13 @@ class ArticleDetailCommentsView(ListAPIView):
         article_id: int = self.kwargs.get('pk')
         return Comment.objects.filter(article_id=article_id)
 
+    @extend_schema(
+        summary="List Comments",
+        request=None,
+        responses={
+            200:ArticleDetailCommentsSerializer(many=True)
+        }
+    )
     def list(self, request, *args, **kwargs):
         queryset: QuerySet[Comment] = self.filter_queryset(self.get_queryset())
 
@@ -355,6 +462,8 @@ class ArticleDetailCommentsView(ListAPIView):
             ]
         }
         return Response(data)
+
+
 
 
 class FavoriteArticleView(APIView):
@@ -407,6 +516,7 @@ class FavoriteArticleView(APIView):
 
 
 class ClapView(APIView):
+    serializer_class: Type[ClapSerializer] = ClapSerializer
     permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
 

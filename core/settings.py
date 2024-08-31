@@ -254,7 +254,7 @@ SPECTACULAR_SETTINGS = {
             'name': 'Authorization',
             'in': 'header'
         }
-    },
+    }
 }
 
 AUTH_USER_MODEL = 'users.CustomUser'
