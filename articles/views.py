@@ -119,14 +119,14 @@ from .serializers import (
 class ArticlesView(viewsets.ModelViewSet):
     filterset_class: Type[ArticleFilter] = ArticleFilter
 
-    # authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
-    #
-    # def get_permissions(self) -> list:
-    #     if self.action in ('destroy', 'create', 'retrieve', 'archive', 'pin', 'unpin'):
-    #         self.permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
-    #     else:
-    #         self.permission_classes: tuple[Type[AllowAny]] = AllowAny,
-    #     return super().get_permissions()
+    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+
+    def get_permissions(self) -> list:
+        if self.action in ('destroy', 'create', 'retrieve', 'archive', 'pin', 'unpin'):
+            self.permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
+        else:
+            self.permission_classes: tuple[Type[AllowAny]] = AllowAny,
+        return super().get_permissions()
 
     def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
         ArticleListSerializer] | Type[PinSerializer]:
