@@ -119,14 +119,14 @@ from .serializers import (
 class ArticlesView(viewsets.ModelViewSet):
     filterset_class: Type[ArticleFilter] = ArticleFilter
 
-    authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
-
-    def get_permissions(self) -> list:
-        if self.action in ('destroy', 'create', 'retrieve', 'archive', 'pin', 'unpin'):
-            self.permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
-        else:
-            self.permission_classes: tuple[Type[AllowAny]] = AllowAny,
-        return super().get_permissions()
+    # authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
+    #
+    # def get_permissions(self) -> list:
+    #     if self.action in ('destroy', 'create', 'retrieve', 'archive', 'pin', 'unpin'):
+    #         self.permission_classes: tuple[Type[IsAuthenticated]] = IsAuthenticated,
+    #     else:
+    #         self.permission_classes: tuple[Type[AllowAny]] = AllowAny,
+    #     return super().get_permissions()
 
     def get_serializer_class(self) -> Type[ArticleCreateSerializer] | Type[ArticleDetailSerializer] | Type[
         ArticleListSerializer] | Type[PinSerializer]:
@@ -184,9 +184,10 @@ class ArticlesView(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def retrieve(self, request: HttpRequest, pk: int, *args, **kwargs):
-        if isinstance(pk, int):
+        try:
+            pk: int = int(pk)
             article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
-        else:
+        except ValueError:
             return Response(data={"detail": "PK must be a valid integer"}, status=status.HTTP_404_NOT_FOUND)
 
         user: CustomUser = request.user
@@ -198,6 +199,7 @@ class ArticlesView(viewsets.ModelViewSet):
             article.save()
 
         return super().retrieve(request=request, *args, **kwargs)
+
 
     @action(methods=["POST"], detail=True, description="Increments article reads count", url_path="read",
             url_name="article-read")
@@ -211,6 +213,7 @@ class ArticlesView(viewsets.ModelViewSet):
             "detail": "Maqolani o'qish soni ortdi."
         }
             , status=status.HTTP_200_OK)
+
 
     @action(methods=["POST"], detail=True, description="Archives article", url_path="archive",
             url_name="article-archive")
@@ -228,6 +231,7 @@ class ArticlesView(viewsets.ModelViewSet):
             "detail": "Maqola arxivlandi."
         }, status=status.HTTP_200_OK)
 
+
     @action(methods=["POST"], detail=True, description="Pins article", url_path="pin",
             url_name="article-pin")
     def pin(self, request: HttpRequest, pk: int, *args, **kwargs):
@@ -241,6 +245,7 @@ class ArticlesView(viewsets.ModelViewSet):
         return Response(data={
             "detail": "Maqola pin qilindi."
         }, status=status.HTTP_200_OK)
+
 
     @action(methods=["DELETE"], detail=True, description="Unpins article", url_path="unpin",
             url_name="article-unpin")
@@ -258,6 +263,7 @@ class ArticlesView(viewsets.ModelViewSet):
         pin.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
     def get_queryset(self) -> QuerySet[Article]:
         if self.action in ('retrieve', 'list', 'destroy', 'create'):
