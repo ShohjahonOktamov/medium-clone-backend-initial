@@ -493,6 +493,7 @@ class UserNotificationView(mixins.RetrieveModelMixin,
                            mixins.UpdateModelMixin,
                            viewsets.GenericViewSet):
     serializer_class: Type[NotificationSerializer] = NotificationSerializer
+
     authentication_classes: tuple[Type[CustomJWTAuthentication]] = CustomJWTAuthentication,
     permission_classes: tuple[Type[permissions.IsAuthenticated]] = permissions.IsAuthenticated,
 
@@ -513,11 +514,14 @@ class UserNotificationView(mixins.RetrieveModelMixin,
             404: "No Notification matches the given query."
         }
     )
-    def patch(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
+    def partial_update(self, request: HttpRequest, pk: int, *args, **kwargs) -> Response:
         notification: Notification = get_object_or_404(klass=self.get_queryset(), pk=pk)
 
-        notification.read = True
-        notification.read_at = timezone.now()
-        notification.save()
+        super().partial_update(request=request, *args, **kwargs)
+
+        if Notification.objects.get(pk=pk).read:
+            notification.read = True
+            notification.read_at = timezone.now()
+            notification.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
