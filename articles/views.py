@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.authentications import CustomJWTAuthentication
-from users.models import CustomUser, ReadingHistory, Pin
+from users.models import CustomUser, Pin
 from users.serializers import UserSerializer, PinSerializer
 from .filters import ArticleFilter
 from .models import Article, TopicFollow, Topic, Comment, Favorite, Clap, Report, FAQ
@@ -184,7 +184,10 @@ class ArticlesView(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def retrieve(self, request: HttpRequest, pk: int, *args, **kwargs):
-        article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
+        if isinstance(pk, int):
+            article: Article = get_object_or_404(klass=self.get_queryset(), pk=pk)
+        else:
+            return Response(data={"detail": "PK must be a valid integer"}, status=status.HTTP_400_BAD_REQUEST)
 
         user: CustomUser = request.user
 
