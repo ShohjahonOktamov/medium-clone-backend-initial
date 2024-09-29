@@ -85,7 +85,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'core.middlewares.CustomLocaleMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-    'core.middlewares.LogRequestMiddleware'
+    'core.middlewares.LogRequestMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    "django.contrib.sessions.middleware.SessionMiddleware"
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -106,7 +108,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "core.wsgi.application"
+WSGI_APPLICATION = "core.wsgi.app"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -168,6 +170,8 @@ LOCALE_PATHS = [
 STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "static"
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 
@@ -266,34 +270,36 @@ DJANGORESIZED_DEFAULT_KEEP_META = True
 DJANGORESIZED_DEFAULT_FORMAT_EXTENSIONS = {'JPEG': ".jpg"}
 DJANGORESIZED_DEFAULT_NORMALIZE_ROTATION = True
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'intercept': {
-            '()': InterceptHandler,
-            'level': 0,
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': 'django.log',
-        },
-    },
-    'loggers': {
-        '': {
-            'handlers': ['intercept', 'file'],
-            'level': "DEBUG",
-            'propagate': True,
-        },
-    }
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'intercept': {
+#             '()': InterceptHandler,
+#             'level': 0,
+#         },
+#         'file': {
+#             'level': 'DEBUG',
+#             'class': 'logging.FileHandler',
+#             'filename': 'django.log',
+#         },
+#     },
+#     'loggers': {
+#         '': {
+#             'handlers': ['intercept', 'file'],
+#             'level': "DEBUG",
+#             'propagate': True,
+#         },
+#     }
+# }
 
-REDIS_HOST = config('REDIS_HOST', default='localhost')
-REDIS_PORT = config('REDIS_PORT', default='6379')
-REDIS_DB = config('REDIS_DB', default='1')
+# REDIS_HOST = config('REDIS_HOST', default='localhost')
+# REDIS_PORT = config('REDIS_PORT', default='6379')
+# REDIS_DB = config('REDIS_DB', default='1')
+#
+# REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
 
-REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
+REDIS_URL = config('REDIS_URL')
 
 CACHES = {
     'default': {
@@ -305,7 +311,7 @@ CACHES = {
     }
 }
 
-logger.info(f"Using redis | URL: {REDIS_URL}")
+# logger.info(f"Using redis | URL: {REDIS_URL}")
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"

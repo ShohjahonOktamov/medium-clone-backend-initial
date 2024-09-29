@@ -5,28 +5,27 @@ import uuid
 from secrets import token_urlsafe
 
 import redis
-from decouple import config
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
+from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.enums import TokenType
 from .exceptions import OTPException
-from django.utils.translation import gettext_lazy as _
 
-REDIS_HOST = config("REDIS_HOST", None)
-REDIS_PORT = config("REDIS_PORT", None)
-REDIS_DB = config("REDIS_DB", None)
+# REDIS_HOST = config("REDIS_HOST", None)
+# REDIS_PORT = config("REDIS_PORT", None)
+# REDIS_DB = config("REDIS_DB", None)
 User = get_user_model()
 
 
 class TokenService:
     @classmethod
     def get_redis_client(cls) -> redis.Redis:
-        return redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+        return redis.Redis.from_url(settings.REDIS_URL)
 
     @classmethod
     def get_valid_tokens(cls, user_id: int, token_type: TokenType) -> set:
@@ -122,7 +121,7 @@ class SendEmailService:
 class OTPService:
     @classmethod
     def get_redis_conn(cls) -> redis.Redis:
-        return redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+        return redis.Redis.from_url(settings.REDIS_URL)
 
     @classmethod
     def generate_otp(
@@ -140,7 +139,7 @@ class OTPService:
         if check_if_exists and redis_conn.exists(key):
             ttl = redis_conn.ttl(key)
             raise OTPException(
-               _("Sizda yaroqli OTP kodingiz bor. {ttl} soniyadan keyin qayta urinib koʻring.").format(ttl=ttl)
+                _("Sizda yaroqli OTP kodingiz bor. {ttl} soniyadan keyin qayta urinib koʻring.").format(ttl=ttl)
             )
         redis_conn.set(key, otp_hash, ex=expire_in)
         return otp_code, secret_token

@@ -7,7 +7,6 @@ from django.db.models import Max, QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django_redis import get_redis_connection
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, permissions, generics, parsers, exceptions, viewsets, mixins
 from rest_framework.exceptions import ValidationError
@@ -136,11 +135,6 @@ class UsersMe(generics.RetrieveAPIView, generics.UpdateAPIView):
         return UserSerializer
 
     def patch(self, request, *args, **kwargs):
-        redis_conn = get_redis_connection('default')
-        redis_conn.set('test_key', 'test_value', ex=3600)
-        cached_value = redis_conn.get('test_key')
-        print(cached_value)
-
         return super().partial_update(request, *args, **kwargs)
 
 

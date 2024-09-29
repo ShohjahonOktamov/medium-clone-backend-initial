@@ -1,12 +1,13 @@
 from typing import Optional
 
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.authentication import AuthUser, JWTAuthentication
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import Token
+
 from users.enums import TokenType
 from users.services import TokenService
-from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 
@@ -30,8 +31,8 @@ class CustomJWTAuthentication(JWTAuthentication):
     def is_valid_access_token(cls, user: User, access_token: Token) -> bool:
         valid_access_tokens = TokenService.get_valid_tokens(user.id, TokenType.ACCESS)
         if (
-                valid_access_tokens
-                and str(access_token).encode() not in valid_access_tokens
+                # valid_access_tokens and
+                str(access_token).encode() not in valid_access_tokens
         ):
             raise AuthenticationFailed(_("Kirish ma'lumotlari yaroqsiz"))
         return True
