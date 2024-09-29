@@ -4,9 +4,6 @@ from pathlib import Path
 
 from decouple import config
 from django.utils.translation import gettext_lazy as _
-from loguru import logger
-
-from .custom_logging import InterceptHandler
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,8 +16,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
-
-ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -184,6 +179,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SECRET_KEY = config('SECRET_KEY', default='hjg^&%**%%^*GHVGJHGKJGKH')
 DEBUG = config('DEBUG', default=False, cast=bool)
+
+if DEBUG:
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = [".medium-clone-backend-initial-heau8tp76.vercel.app", ".shohjahon.com"]
 
 DATABASES = {
     'default': {
