@@ -40,6 +40,7 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
             'author': {'write_only': True},
         }
 
+
 class ArticleListSerializer(serializers.ModelSerializer):
     class Meta:
         model: Type[Article] = Article
