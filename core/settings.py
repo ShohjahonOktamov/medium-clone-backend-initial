@@ -183,7 +183,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
 else:
-    ALLOWED_HOSTS = [".medium-clone-backend-initial-heau8tp76.vercel.app", ".shohjahon.com"]
+    ALLOWED_HOSTS = [".medium-clone-backend-initial.vercel.app", ".shohjahon.com"]
 
 DATABASES = {
     'default': {
