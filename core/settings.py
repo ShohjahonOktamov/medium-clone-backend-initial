@@ -81,9 +81,9 @@ MIDDLEWARE = [
     'core.middlewares.CustomLocaleMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'core.middlewares.LogRequestMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    "django.contrib.sessions.middleware.SessionMiddleware"
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
+
 
 ROOT_URLCONF = "core.urls"
 
@@ -164,7 +164,7 @@ LOCALE_PATHS = [
 
 STATIC_URL = "/static/"
 
-STATIC_ROOT = BASE_DIR / "static"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
